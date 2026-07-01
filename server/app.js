@@ -3,9 +3,12 @@ const multer = require("multer");
 const cors = require("cors");
 const XLSX = require("xlsx");
 const pool = require("./config/db");
+const projectRoutes = require("./routes/projectRoutes");
 
 const app = express();
 app.use(cors());
+app.use(express.json());
+app.use("/projects", projectRoutes);
 
 const upload = multer({ dest: "uploads/" });
 
