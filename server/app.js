@@ -2,6 +2,7 @@ const express = require("express");
 const multer = require("multer");
 const cors = require("cors");
 const XLSX = require("xlsx");
+const pool = require("./config/db");
 
 const app = express();
 app.use(cors());
@@ -43,6 +44,15 @@ app.get("/data", (req, res) => {
         totalRows: dataset.length,
         preview: dataset.slice(0, 20)
     });
+});
+
+pool.query("SELECT NOW()", (err, result) => {
+    if (err) {
+        console.error("Database connection failed:", err);
+    } else {
+        console.log("✅ PostgreSQL Connected!");
+        console.log("Current Database Time:", result.rows[0].now);
+    }
 });
 
 app.listen(5000, () => {
