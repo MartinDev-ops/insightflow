@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import MainLayout from "../components/layout/MainLayout";
 import { getProjects } from "../services/projectService";
-import ProjectCard from "../components/dashboard/ProjectCard";
 import "../styles/dashboard.css";
+
+import NewProjectModal from "../components/dashboard/NewProjectModal";
+import RecentProjects from "../components/dashboard/RecentProjects";
 
 function Dashboard() {
 
     const [projects, setProjects] = useState([]);
+    const [showModal, setShowModal] = useState(false);
 
     useEffect(() => {
 
@@ -22,6 +25,18 @@ function Dashboard() {
 
     }, []);
 
+    function handleProjectCreated(newProject) {
+
+        setProjects((previousProjects) => [
+
+            newProject,
+
+            ...previousProjects
+
+        ]);
+
+    }
+
     return (
         <MainLayout>
 
@@ -31,28 +46,10 @@ function Dashboard() {
                 Manage your spreadsheets, analytics and AI projects.
             </p>
 
-            <h2 style={{ marginTop: "40px" }}>
-                Recent Projects
-            </h2>
-
-            {projects.length === 0 ? (
-
-                <p>No projects found.</p>
-
-            ) : (
-
-                projects.map(project => (
-
-                    <ProjectCard
-                        key={project.id}
-                        project={project}
-                    />
-
-                ))
-
-            )}
+            <RecentProjects projects={projects} />
 
             <button
+                onClick={() => setShowModal(true)}
                 style={{
                     marginTop: "30px",
                     padding: "14px 24px",
@@ -61,6 +58,13 @@ function Dashboard() {
             >
                 + New Project
             </button>
+
+            {showModal && (
+                <NewProjectModal
+                    onClose={() => setShowModal(false)}
+                    onProjectCreated={handleProjectCreated}
+                />
+            )}
 
         </MainLayout>
     );

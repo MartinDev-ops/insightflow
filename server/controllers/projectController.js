@@ -2,18 +2,22 @@ const pool = require("../config/db");
 
 // Create a new project
 const createProject = async (req, res) => {
+
     try {
 
         const { name, description, category } = req.body;
 
         // Validation
         if (!name || !category) {
+
             return res.status(400).json({
                 message: "Project name and category are required."
             });
+
         }
 
-        const result = await pool.query(
+        // Create project
+        const projectResult = await pool.query(
             `
             INSERT INTO projects
             (name, description, category)
@@ -23,7 +27,29 @@ const createProject = async (req, res) => {
             [name, description, category]
         );
 
-        res.status(201).json(result.rows[0]);
+        const project = projectResult.rows[0];
+
+        // Create an empty workbook for the project
+        const emptyWorkbook = [
+            {
+                name: "Sheet1",
+                celldata: []
+            }
+        ];
+
+        await pool.query(
+            `
+            INSERT INTO workbooks
+            (project_id, workbook_data)
+            VALUES ($1, $2);
+            `,
+            [
+                project.id,
+                JSON.stringify(emptyWorkbook)
+            ]
+        );
+
+        res.status(201).json(project);
 
     } catch (error) {
 
@@ -34,10 +60,12 @@ const createProject = async (req, res) => {
         });
 
     }
+
 };
 
 // Get all projects
 const getProjects = async (req, res) => {
+
     try {
 
         const result = await pool.query(`
@@ -57,10 +85,12 @@ const getProjects = async (req, res) => {
         });
 
     }
+
 };
 
-// Get a single project by ID
+// Get a single project
 const getProjectById = async (req, res) => {
+
     try {
 
         const { id } = req.params;
@@ -75,9 +105,11 @@ const getProjectById = async (req, res) => {
         );
 
         if (result.rows.length === 0) {
+
             return res.status(404).json({
                 message: "Project not found."
             });
+
         }
 
         res.status(200).json(result.rows[0]);
@@ -91,6 +123,7 @@ const getProjectById = async (req, res) => {
         });
 
     }
+
 };
 
 module.exports = {

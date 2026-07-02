@@ -1,6 +1,15 @@
+import { useNavigate } from "react-router-dom";
+
 function ProjectCard({ project }) {
+
+    const navigate = useNavigate();
+
     return (
-        <div className="project-card">
+        <div
+            className="project-card"
+            onClick={() => navigate(`/projects/${project.id}`)}
+            style={{ cursor: "pointer" }}
+        >
 
             <div className="project-icon">
                 📁
