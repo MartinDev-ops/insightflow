@@ -1,0 +1,75 @@
+.modal-overlay{
+
+    position:fixed;
+
+    inset:0;
+
+    background:rgba(0,0,0,.45);
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    z-index:1000;
+
+}
+
+.modal{
+
+    width:500px;
+
+    background:white;
+
+    border-radius:var(--radius-lg);
+
+    padding:30px;
+
+    box-shadow:var(--shadow-md);
+
+}
+
+.modal h2{
+
+    margin-bottom:25px;
+
+}
+
+.modal input,
+.modal textarea,
+.modal select{
+
+    width:100%;
+
+    padding:12px;
+
+    margin-top:8px;
+
+    margin-bottom:20px;
+
+    border:1px solid var(--border);
+
+    border-radius:10px;
+
+    font-size:15px;
+
+}
+
+.modal textarea{
+
+    resize:none;
+
+    height:120px;
+
+}
+
+.modal-actions{
+
+    display:flex;
+
+    justify-content:flex-end;
+
+    gap:12px;
+
+}
