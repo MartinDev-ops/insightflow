@@ -1,11 +1,19 @@
 import { useRef } from "react";
 
-function WorkspaceToolbar({ onSave, onImport }) {
+function WorkspaceToolbar({
+
+    onSave,
+    onImport,
+    saving
+
+}) {
 
     const fileInputRef = useRef(null);
 
     function handleImportClick() {
+
         fileInputRef.current.click();
+
     }
 
     function handleFileChange(event) {
@@ -13,11 +21,13 @@ function WorkspaceToolbar({ onSave, onImport }) {
         const file = event.target.files[0];
 
         if (file && onImport) {
+
             onImport(file);
+
         }
 
-        // Allow selecting the same file again later
         event.target.value = "";
+
     }
 
     return (
@@ -32,32 +42,54 @@ function WorkspaceToolbar({ onSave, onImport }) {
             }}
         >
 
-            <button onClick={onSave}>
-                💾 Save
+            <button
+
+                onClick={onSave}
+
+                disabled={saving}
+
+            >
+
+                {saving ? "⏳ Saving..." : "💾 Save"}
+
             </button>
 
             <button onClick={handleImportClick}>
+
                 📂 Import Excel
+
             </button>
 
             <button>
+
                 📤 Export Excel
+
             </button>
 
             <button>
+
                 🤖 AI Analyze
+
             </button>
 
             <button>
+
                 🔄 Refresh
+
             </button>
 
             <input
+
                 type="file"
+
                 accept=".xlsx,.xls"
+
                 ref={fileInputRef}
+
                 onChange={handleFileChange}
+
                 style={{ display: "none" }}
+
             />
 
         </div>

@@ -5,16 +5,33 @@ import { UniverSheetsCorePreset } from "@univerjs/preset-sheets-core";
 
 import UniverPresetSheetsCoreEnUS from "@univerjs/preset-sheets-core/locales/en-US";
 
-import { convertWorkbookToUniver } from "../../utils/univerConverter";
+import { importExcelToUniver } from "../../import/ExcelImporter";
 
 import "@univerjs/preset-sheets-core/lib/index.css";
 
-function SpreadsheetView({ onReady, importedWorkbook }) {
+function SpreadsheetView({
+    onReady,
+    importedWorkbook,
+    onWorkbookChange
+}) {
 
     const containerRef = useRef(null);
+
     const univerAPIRef = useRef(null);
 
+    const initializedRef = useRef(false);
+
+    const workbookLoadedRef = useRef(false);
+
     useEffect(() => {
+
+        if (initializedRef.current) {
+
+            return;
+
+        }
+
+        initializedRef.current = true;
 
         const { univerAPI } = createUniver({
 
@@ -40,9 +57,33 @@ function SpreadsheetView({ onReady, importedWorkbook }) {
 
         });
 
+        univerAPIRef.current = univerAPI;
+
+        console.log("========== UNIVER API ==========");
+        console.log(
+            Object.getOwnPropertyNames(
+                Object.getPrototypeOf(univerAPI)
+            )
+        );
+
+        // Create ONE blank workbook
         univerAPI.createWorkbook({});
 
-        univerAPIRef.current = univerAPI;
+        // --------------------------
+        // Notify parent when workbook changes
+        // --------------------------
+
+        const workbook = univerAPI.getActiveWorkbook();
+
+        if (workbook && onWorkbookChange) {
+
+            workbook.onCommandExecuted(() => {
+
+                onWorkbookChange();
+
+            });
+
+        }
 
         if (onReady) {
 
@@ -50,21 +91,17 @@ function SpreadsheetView({ onReady, importedWorkbook }) {
 
         }
 
+        console.log("✅ Univer initialized.");
+
         return () => {
 
             univerAPI.dispose();
 
         };
 
-    }, [onReady]);
+    }, []);
 
     useEffect(() => {
-
-        if (!importedWorkbook) {
-
-            return;
-
-        }
 
         if (!univerAPIRef.current) {
 
@@ -72,36 +109,83 @@ function SpreadsheetView({ onReady, importedWorkbook }) {
 
         }
 
-        console.log("Workbook received:");
-        console.log(importedWorkbook);
+        if (!importedWorkbook) {
 
-        const workbookData = convertWorkbookToUniver(importedWorkbook);
-
-        console.log("Converted Workbook:");
-        console.log(workbookData);
-
-        try {
-
-            univerAPIRef.current.createWorkbook(workbookData);
-
-            console.log("✅ Workbook loaded into Univer");
-
-        } catch (error) {
-
-            console.error("Failed to load workbook:", error);
+            return;
 
         }
+
+        // ---------------------------------------
+        // Load saved Univer workbook
+        // ---------------------------------------
+
+        if (importedWorkbook.sheets && importedWorkbook.sheetOrder) {
+
+            if (workbookLoadedRef.current) {
+
+                return;
+
+            }
+
+            workbookLoadedRef.current = true;
+
+            console.log("Loading saved Univer workbook...");
+
+            const currentWorkbook =
+                univerAPIRef.current.getActiveWorkbook();
+
+            if (currentWorkbook) {
+
+                console.log(
+                    "Disposing workbook:",
+                    currentWorkbook.getId()
+                );
+
+                univerAPIRef.current.disposeUnit(
+                    currentWorkbook.getId()
+                );
+
+            }
+
+            console.log("Creating saved workbook...");
+
+            univerAPIRef.current.createWorkbook(
+                importedWorkbook
+            );
+
+            console.log("✅ Saved workbook restored.");
+
+            return;
+
+        }
+
+        // ---------------------------------------
+        // Excel Import
+        // ---------------------------------------
+
+        console.log("Importing Excel workbook...");
+
+        importExcelToUniver(
+            univerAPIRef.current,
+            importedWorkbook
+        );
 
     }, [importedWorkbook]);
 
     return (
 
         <div
+
             ref={containerRef}
+
             style={{
+
                 width: "100%",
+
                 height: "700px"
+
             }}
+
         />
 
     );

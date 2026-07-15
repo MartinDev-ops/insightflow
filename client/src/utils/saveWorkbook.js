@@ -1,40 +1,42 @@
-import { saveWorkbook } from "../services/workbookService";
-
-export async function saveCurrentWorkbook(univerAPI, projectId) {
+export async function saveCurrentWorkbook(projectId, univerAPI) {
 
     if (!univerAPI) {
 
-        throw new Error("Univer API is not initialized.");
+        throw new Error("Univer API not ready.");
 
     }
 
-    try {
+    const workbook = univerAPI.getActiveWorkbook();
 
-        // Get the active workbook
-        const workbook = univerAPI.getActiveWorkbook();
+    if (!workbook) {
 
-        if (!workbook) {
+        throw new Error("No active workbook.");
 
-            throw new Error("No active workbook found.");
+    }
 
+    const snapshot = workbook.save();
+
+    const response = await fetch(
+        `http://localhost:5001/workbooks/${projectId}`,
+        {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                workbook_data: snapshot
+            })
         }
+    );
 
-        // Export workbook snapshot
-        const snapshot = workbook.getSnapshot();
+    if (!response.ok) {
 
-        // Save to backend
-        await saveWorkbook(projectId, snapshot);
-
-        console.log("✅ Workbook saved successfully.");
-
-        return true;
-
-    } catch (error) {
-
-        console.error("Save Workbook Error:", error);
-
-        throw error;
+        throw new Error("Failed to save workbook.");
 
     }
+
+    console.log("✅ Workbook saved.");
+
+    return await response.json();
 
 }

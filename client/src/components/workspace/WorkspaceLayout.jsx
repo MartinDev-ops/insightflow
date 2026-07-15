@@ -1,7 +1,14 @@
 import WorkspaceToolbar from "./WorkspaceToolbar";
 import AIPanel from "./AIPanel";
 
-function WorkspaceLayout({ children, onSave, onImport }) {
+function WorkspaceLayout({
+
+    children,
+    onSave,
+    onImport,
+    saving
+
+}) {
 
     return (
 
@@ -13,10 +20,11 @@ function WorkspaceLayout({ children, onSave, onImport }) {
             }}
         >
 
-            <WorkspaceToolbar  
+            <WorkspaceToolbar
 
-            onSave={onSave}
-            onImport={onImport} 
+                onSave={onSave}
+                onImport={onImport}
+                saving={saving}
 
             />
 
@@ -32,7 +40,9 @@ function WorkspaceLayout({ children, onSave, onImport }) {
                         flex: 1
                     }}
                 >
+
                     {children}
+
                 </div>
 
                 <AIPanel />

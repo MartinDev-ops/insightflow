@@ -16,8 +16,8 @@ function Workspace() {
     const univerRef = useRef(null);
 
     const [importedWorkbook, setImportedWorkbook] = useState(null);
-
     const [loadingWorkbook, setLoadingWorkbook] = useState(true);
+    const [saving, setSaving] = useState(false);
 
     function handleSpreadsheetReady(univerAPI) {
 
@@ -37,17 +37,21 @@ function Workspace() {
 
                 if (workbook?.workbook_data) {
 
-                    console.log("Workbook loaded from Supabase");
+                    console.log("Workbook loaded from database");
 
                     setImportedWorkbook(workbook.workbook_data);
 
                 }
 
-            } catch (error) {
+            }
+
+            catch (error) {
 
                 console.error(error);
 
-            } finally {
+            }
+
+            finally {
 
                 setLoadingWorkbook(false);
 
@@ -61,25 +65,30 @@ function Workspace() {
 
     async function handleSave() {
 
-        if (!univerRef.current) {
-
-            alert("Spreadsheet is not ready yet.");
-
-            return;
-
-        }
+        if (saving) return;
 
         try {
 
-            await saveCurrentWorkbook(univerRef.current, id);
+            setSaving(true);
 
-            alert("✅ Workbook saved successfully!");
+            await saveCurrentWorkbook(
+                id,
+                univerRef.current
+            );
 
         }
 
-        catch {
+        catch (error) {
+
+            console.error(error);
 
             alert("❌ Failed to save workbook.");
+
+        }
+
+        finally {
+
+            setSaving(false);
 
         }
 
@@ -91,7 +100,14 @@ function Workspace() {
 
             const result = await uploadExcel(file);
 
-            setImportedWorkbook(result.workbook);
+            // Force React to destroy the previous workbook first
+            setImportedWorkbook(null);
+
+            setTimeout(() => {
+
+                setImportedWorkbook(result.workbook);
+
+            }, 50);
 
             alert("Excel imported successfully!");
 
@@ -130,17 +146,14 @@ function Workspace() {
             <WorkspaceLayout
 
                 onSave={handleSave}
-
                 onImport={handleImport}
+                saving={saving}
 
             >
 
                 <SpreadsheetView
 
-                    projectId={id}
-
                     importedWorkbook={importedWorkbook}
-
                     onReady={handleSpreadsheetReady}
 
                 />

@@ -19,19 +19,19 @@ const getWorkbook = async (req, res) => {
         if (result.rows.length === 0) {
 
             return res.status(200).json({
-                workbook_data: [
-                    {
-                        name: "Sheet1",
-                        celldata: []
-                    }
-                ]
+                workbook_data: null
             });
 
         }
 
+        console.log("========== LOADED FROM DATABASE ==========");
+        console.dir(result.rows[0].workbook_data, { depth: null });
+
         res.status(200).json(result.rows[0]);
 
-    } catch (error) {
+    }
+
+    catch (error) {
 
         console.error("Get Workbook Error:", error);
 
@@ -51,6 +51,9 @@ const saveWorkbook = async (req, res) => {
         const { projectId } = req.params;
 
         const { workbook_data } = req.body;
+
+        console.log("========== SAVING TO DATABASE ==========");
+        console.dir(workbook_data, { depth: null });
 
         const existingWorkbook = await pool.query(
             `
@@ -75,7 +78,9 @@ const saveWorkbook = async (req, res) => {
                 [projectId, workbook_data]
             );
 
-        } else {
+        }
+
+        else {
 
             result = await pool.query(
                 `
@@ -91,9 +96,13 @@ const saveWorkbook = async (req, res) => {
 
         }
 
+        console.log("========== SAVED SUCCESSFULLY ==========");
+
         res.status(200).json(result.rows[0]);
 
-    } catch (error) {
+    }
+
+    catch (error) {
 
         console.error("Save Workbook Error:", error);
 
