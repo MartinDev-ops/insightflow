@@ -4,13 +4,14 @@ const express = require("express");
 const multer = require("multer");
 const cors = require("cors");
 const ExcelJS = require("exceljs");
-const cleanRoutes = require("./routes/cleanRoutes");
 
 const pool = require("./config/db");
 
 const projectRoutes = require("./routes/projectRoutes");
 const workbookRoutes = require("./routes/workbookRoutes");
 const exportRoutes = require("./routes/exportRoutes");
+const cleanRoutes = require("./routes/cleanRoutes");
+const aiRoutes = require("./routes/aiRoutes");
 
 const app = express();
 
@@ -22,21 +23,17 @@ app.use(express.json());
 // =========================
 
 app.use("/projects", projectRoutes);
-
 app.use("/workbooks", workbookRoutes);
-
 app.use("/export", exportRoutes);
-
 app.use("/clean", cleanRoutes);
+app.use("/ai", aiRoutes);
 
 // =========================
 // File Upload
 // =========================
 
 const upload = multer({
-
     dest: "uploads/"
-
 });
 
 let dataset = [];
@@ -52,9 +49,7 @@ app.post("/upload", upload.array("files"), async (req, res) => {
         if (!req.files || req.files.length === 0) {
 
             return res.status(400).json({
-
                 message: "No Excel file uploaded."
-
             });
 
         }
@@ -71,25 +66,20 @@ app.post("/upload", upload.array("files"), async (req, res) => {
             const columns = [];
             const merges = [];
 
-            // Column widths
             worksheet.columns.forEach((column) => {
 
                 columns.push({
-
                     width: column.width || 10
-
                 });
 
             });
 
-            // Merged cells
             Object.keys(worksheet._merges).forEach((merge) => {
 
                 merges.push(merge);
 
             });
 
-            // Rows
             worksheet.eachRow({ includeEmpty: true }, (row) => {
 
                 const cells = [];
@@ -97,49 +87,31 @@ app.post("/upload", upload.array("files"), async (req, res) => {
                 row.eachCell({ includeEmpty: true }, (cell) => {
 
                     cells.push({
-
                         value: cell.value,
-
                         style: cell.style,
-
                         numFmt: cell.numFmt,
-
                         font: cell.font,
-
                         fill: cell.fill,
-
                         border: cell.border,
-
                         alignment: cell.alignment
-
                     });
 
                 });
 
                 rows.push({
-
                     height: row.height,
-
                     cells
-
                 });
 
             });
 
             workbookData.push({
-
                 name: worksheet.name,
-
                 rowCount: worksheet.rowCount,
-
                 columnCount: worksheet.columnCount,
-
                 columns,
-
                 merges,
-
                 rows
-
             });
 
         });
@@ -149,11 +121,8 @@ app.post("/upload", upload.array("files"), async (req, res) => {
         console.log("✅ Workbook imported with ExcelJS");
 
         res.json({
-
             message: "Workbook imported successfully",
-
             workbook: workbookData
-
         });
 
     }
@@ -163,9 +132,7 @@ app.post("/upload", upload.array("files"), async (req, res) => {
         console.error(error);
 
         res.status(500).json({
-
             error: error.message
-
         });
 
     }

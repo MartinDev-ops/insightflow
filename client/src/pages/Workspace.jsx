@@ -24,11 +24,13 @@ function Workspace() {
     const [showCleanPreview, setShowCleanPreview] = useState(false);
 
     const [cleanSummary, setCleanSummary] = useState({
+
         duplicates: 0,
         emptyCells: 0,
         phoneNumbers: 0,
         dates: 0,
         trimmed: 0
+
     });
 
     function handleSpreadsheetReady(univerAPI) {
@@ -48,8 +50,6 @@ function Workspace() {
                 const workbook = await getWorkbook(id);
 
                 if (workbook?.workbook_data) {
-
-                    console.log("Workbook loaded from database");
 
                     setImportedWorkbook(workbook.workbook_data);
 
@@ -129,11 +129,7 @@ function Workspace() {
 
         try {
 
-            if (!univerRef.current) {
-
-                return;
-
-            }
+            if (!univerRef.current) return;
 
             const workbook = univerRef.current
                 .getActiveWorkbook()
@@ -141,7 +137,6 @@ function Workspace() {
 
             const result = await cleanWorkbook(workbook);
 
-            // Replace workbook with cleaned workbook
             setImportedWorkbook(result.workbook);
 
             if (result.summary) {
@@ -170,7 +165,6 @@ function Workspace() {
 
             setShowCleanPreview(false);
 
-            // Wait for SpreadsheetView to finish loading
             setTimeout(async () => {
 
                 await saveCurrentWorkbook(id, univerRef.current);
@@ -212,24 +206,31 @@ function Workspace() {
             <h1>Project #{id}</h1>
 
             <WorkspaceLayout
+
+                workbook={importedWorkbook}
                 onSave={handleSave}
                 onImport={handleImport}
                 onClean={handleClean}
                 saving={saving}
+
             >
 
                 <SpreadsheetView
+
                     importedWorkbook={importedWorkbook}
                     onReady={handleSpreadsheetReady}
+
                 />
 
             </WorkspaceLayout>
 
             <CleanPreview
+
                 open={showCleanPreview}
                 summary={cleanSummary}
                 onApply={applyCleaning}
                 onCancel={() => setShowCleanPreview(false)}
+
             />
 
         </MainLayout>

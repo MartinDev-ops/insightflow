@@ -10,34 +10,42 @@ function cleanWorkbookData(workbook) {
 
         const seenRows = new Set();
 
-        Object.keys(sheet.cellData || {}).forEach(rowIndex => {
+        const originalRows = sheet.cellData || {};
+        const newCellData = {};
 
-            const row = sheet.cellData[rowIndex];
+        let newRowIndex = 0;
+
+        Object.keys(originalRows).forEach(rowIndex => {
+
+            const row = originalRows[rowIndex];
 
             const values = Object.values(row || {}).map(cell =>
                 String(cell?.v ?? "").trim()
             );
 
+            // Ignore completely empty rows
+            if (values.every(v => v === "")) {
+                return;
+            }
+
             const rowKey = JSON.stringify(values);
+
+            // -------------------------
+            // Duplicate Detection
+            // -------------------------
 
             if (seenRows.has(rowKey)) {
 
                 duplicates++;
-
-                // Keep the row but clear its cells
-                Object.keys(row).forEach(col => {
-
-                    row[col] = {
-                        v: ""
-                    };
-
-                });
-
                 return;
 
             }
 
             seenRows.add(rowKey);
+
+            // -------------------------
+            // Cell Cleaning
+            // -------------------------
 
             Object.values(row || {}).forEach(cell => {
 
@@ -52,44 +60,68 @@ function cleanWorkbookData(workbook) {
 
                 }
 
-                if (typeof cell.v === "string") {
+                if (typeof cell.v !== "string") {
+                    return;
+                }
 
-                    const oldValue = cell.v;
+                // Remove extra spaces
 
-                    cell.v = cell.v.trim();
+                const oldValue = cell.v;
 
-                    if (oldValue !== cell.v) {
+                cell.v = cell.v.trim();
 
-                        trimmed++;
+                if (oldValue !== cell.v) {
 
-                    }
+                    trimmed++;
 
-                    const digits = cell.v.replace(/\D/g, "");
+                }
 
-                    if (digits.length === 10) {
+                // -------------------------
+                // Phone Numbers
+                // -------------------------
 
-                        cell.v = digits;
+                const digits = cell.v.replace(/\D/g, "");
 
-                        phoneNumbers++;
+                if (digits.length === 10) {
 
-                    }
+                    cell.v = digits;
+                    phoneNumbers++;
 
-                    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(cell.v)) {
+                }
 
-                        const [d, m, y] = cell.v.split("/");
+                // -------------------------
+                // Dates
+                // -------------------------
 
-                        cell.v =
-                            `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+                if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(cell.v)) {
 
-                        dates++;
+                    const [d, m, y] = cell.v.split("/");
 
-                    }
+                    cell.v =
+                        `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+
+                    dates++;
 
                 }
 
             });
 
+            // -------------------------
+            // Keep the row
+            // -------------------------
+
+            newCellData[newRowIndex] = row;
+
+            newRowIndex++;
+
         });
+
+        // Replace only the row data
+        sheet.cellData = newCellData;
+
+        // IMPORTANT:
+        // Keep the original spreadsheet size.
+        // DO NOT change sheet.rowCount.
 
     });
 

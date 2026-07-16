@@ -49,11 +49,31 @@ export function convertWorkbookToUniver(workbook) {
 
             columnData[columnIndex] = {
 
-                w: (column.width || 10) * 8
+                // Excel-like column width
+                w: Math.max((column.width || 10) * 8, 90)
 
             };
 
         });
+
+        // If no column information exists,
+        // generate default widths.
+
+        if (Object.keys(columnData).length === 0) {
+
+            const totalColumns = Math.max(sheet.columnCount || 26, 26);
+
+            for (let i = 0; i < totalColumns; i++) {
+
+                columnData[i] = {
+
+                    w: 90
+
+                };
+
+            }
+
+        }
 
         // -------------------------
         // Merge Data
@@ -101,7 +121,8 @@ export function convertWorkbookToUniver(workbook) {
 
             scrollLeft: 0,
 
-            defaultColumnWidth: 73,
+            // Excel default-ish width
+            defaultColumnWidth: 90,
 
             defaultRowHeight: 23,
 
