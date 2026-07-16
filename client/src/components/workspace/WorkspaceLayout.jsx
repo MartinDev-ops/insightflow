@@ -6,6 +6,7 @@ function WorkspaceLayout({
     children,
     onSave,
     onImport,
+    onClean,
     saving
 
 }) {
@@ -24,6 +25,7 @@ function WorkspaceLayout({
 
                 onSave={onSave}
                 onImport={onImport}
+                onClean={onClean}
                 saving={saving}
 
             />

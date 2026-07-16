@@ -4,6 +4,7 @@ const express = require("express");
 const multer = require("multer");
 const cors = require("cors");
 const ExcelJS = require("exceljs");
+const cleanRoutes = require("./routes/cleanRoutes");
 
 const pool = require("./config/db");
 
@@ -25,6 +26,8 @@ app.use("/projects", projectRoutes);
 app.use("/workbooks", workbookRoutes);
 
 app.use("/export", exportRoutes);
+
+app.use("/clean", cleanRoutes);
 
 // =========================
 // File Upload

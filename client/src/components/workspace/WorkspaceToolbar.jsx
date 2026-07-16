@@ -4,6 +4,7 @@ function WorkspaceToolbar({
 
     onSave,
     onImport,
+    onClean,
     saving
 
 }) {
@@ -57,6 +58,12 @@ function WorkspaceToolbar({
             <button onClick={handleImportClick}>
 
                 📂 Import Excel
+
+            </button>
+
+            <button onClick={onClean}>
+
+                🧹 Clean Data
 
             </button>
 

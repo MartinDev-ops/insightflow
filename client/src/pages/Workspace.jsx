@@ -4,10 +4,12 @@ import { useParams } from "react-router-dom";
 import MainLayout from "../components/layout/MainLayout";
 import WorkspaceLayout from "../components/workspace/WorkspaceLayout";
 import SpreadsheetView from "../components/workspace/SpreadsheetView";
+import CleanPreview from "../components/workspace/CleanPreview";
 
 import { saveCurrentWorkbook } from "../utils/saveWorkbook";
 import { uploadExcel } from "../services/uploadService";
 import { getWorkbook } from "../services/workbookService";
+import { cleanWorkbook } from "../services/cleanService";
 
 function Workspace() {
 
@@ -18,6 +20,16 @@ function Workspace() {
     const [importedWorkbook, setImportedWorkbook] = useState(null);
     const [loadingWorkbook, setLoadingWorkbook] = useState(true);
     const [saving, setSaving] = useState(false);
+
+    const [showCleanPreview, setShowCleanPreview] = useState(false);
+
+    const [cleanSummary, setCleanSummary] = useState({
+        duplicates: 0,
+        emptyCells: 0,
+        phoneNumbers: 0,
+        dates: 0,
+        trimmed: 0
+    });
 
     function handleSpreadsheetReady(univerAPI) {
 
@@ -71,10 +83,7 @@ function Workspace() {
 
             setSaving(true);
 
-            await saveCurrentWorkbook(
-                id,
-                univerRef.current
-            );
+            await saveCurrentWorkbook(id, univerRef.current);
 
         }
 
@@ -100,14 +109,7 @@ function Workspace() {
 
             const result = await uploadExcel(file);
 
-            // Force React to destroy the previous workbook first
-            setImportedWorkbook(null);
-
-            setTimeout(() => {
-
-                setImportedWorkbook(result.workbook);
-
-            }, 50);
+            setImportedWorkbook(result.workbook);
 
             alert("Excel imported successfully!");
 
@@ -118,6 +120,72 @@ function Workspace() {
             console.error(error);
 
             alert("Failed to import Excel file.");
+
+        }
+
+    }
+
+    async function handleClean() {
+
+        try {
+
+            if (!univerRef.current) {
+
+                return;
+
+            }
+
+            const workbook = univerRef.current
+                .getActiveWorkbook()
+                .save();
+
+            const result = await cleanWorkbook(workbook);
+
+            // Replace workbook with cleaned workbook
+            setImportedWorkbook(result.workbook);
+
+            if (result.summary) {
+
+                setCleanSummary(result.summary);
+
+            }
+
+            setShowCleanPreview(true);
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+            alert("Cleaning failed.");
+
+        }
+
+    }
+
+    async function applyCleaning() {
+
+        try {
+
+            setShowCleanPreview(false);
+
+            // Wait for SpreadsheetView to finish loading
+            setTimeout(async () => {
+
+                await saveCurrentWorkbook(id, univerRef.current);
+
+                alert("✅ Cleaned workbook saved.");
+
+            }, 500);
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+            alert("Failed to save cleaned workbook.");
 
         }
 
@@ -144,21 +212,25 @@ function Workspace() {
             <h1>Project #{id}</h1>
 
             <WorkspaceLayout
-
                 onSave={handleSave}
                 onImport={handleImport}
+                onClean={handleClean}
                 saving={saving}
-
             >
 
                 <SpreadsheetView
-
                     importedWorkbook={importedWorkbook}
                     onReady={handleSpreadsheetReady}
-
                 />
 
             </WorkspaceLayout>
+
+            <CleanPreview
+                open={showCleanPreview}
+                summary={cleanSummary}
+                onApply={applyCleaning}
+                onCancel={() => setShowCleanPreview(false)}
+            />
 
         </MainLayout>
 

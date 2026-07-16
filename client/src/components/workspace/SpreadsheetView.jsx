@@ -21,8 +21,6 @@ function SpreadsheetView({
 
     const initializedRef = useRef(false);
 
-    const workbookLoadedRef = useRef(false);
-
     useEffect(() => {
 
         if (initializedRef.current) {
@@ -59,19 +57,7 @@ function SpreadsheetView({
 
         univerAPIRef.current = univerAPI;
 
-        console.log("========== UNIVER API ==========");
-        console.log(
-            Object.getOwnPropertyNames(
-                Object.getPrototypeOf(univerAPI)
-            )
-        );
-
-        // Create ONE blank workbook
         univerAPI.createWorkbook({});
-
-        // --------------------------
-        // Notify parent when workbook changes
-        // --------------------------
 
         const workbook = univerAPI.getActiveWorkbook();
 
@@ -115,53 +101,48 @@ function SpreadsheetView({
 
         }
 
-        // ---------------------------------------
+        // -----------------------------
         // Load saved Univer workbook
-        // ---------------------------------------
+        // -----------------------------
 
         if (importedWorkbook.sheets && importedWorkbook.sheetOrder) {
 
-            if (workbookLoadedRef.current) {
-
-                return;
-
-            }
-
-            workbookLoadedRef.current = true;
-
-            console.log("Loading saved Univer workbook...");
+            console.log("Reloading workbook...");
 
             const currentWorkbook =
                 univerAPIRef.current.getActiveWorkbook();
 
             if (currentWorkbook) {
 
-                console.log(
-                    "Disposing workbook:",
-                    currentWorkbook.getId()
-                );
+                try {
 
-                univerAPIRef.current.disposeUnit(
-                    currentWorkbook.getId()
-                );
+                    univerAPIRef.current.disposeUnit(
+                        currentWorkbook.getId()
+                    );
+
+                }
+
+                catch (e) {
+
+                    console.log(e);
+
+                }
 
             }
-
-            console.log("Creating saved workbook...");
 
             univerAPIRef.current.createWorkbook(
                 importedWorkbook
             );
 
-            console.log("✅ Saved workbook restored.");
+            console.log("✅ Workbook loaded.");
 
             return;
 
         }
 
-        // ---------------------------------------
+        // -----------------------------
         // Excel Import
-        // ---------------------------------------
+        // -----------------------------
 
         console.log("Importing Excel workbook...");
 
