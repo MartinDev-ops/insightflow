@@ -2,42 +2,12 @@ const express = require("express");
 
 const router = express.Router();
 
-const { chatbotEngine } = require("../services/chatbotEngine");
+const {
 
-router.post("/", async (req, res) => {
+    askAI
 
-    try {
+} = require("../controllers/aiController");
 
-        const {
-
-            workbook,
-            question
-
-        } = req.body;
-
-        const result = chatbotEngine(
-
-            question,
-            workbook
-
-        );
-
-        res.json(result);
-
-    }
-
-    catch (error) {
-
-        console.error(error);
-
-        res.status(500).json({
-
-            message: "AI failed."
-
-        });
-
-    }
-
-});
+router.post("/", askAI);
 
 module.exports = router;
