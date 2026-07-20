@@ -25,7 +25,8 @@ const COLUMN_SYNONYMS = {
         "full name",
         "employee name",
         "student name",
-        "patient name"
+        "patient name",
+        "first name"
     ],
 
     surname: [
@@ -44,27 +45,37 @@ const COLUMN_SYNONYMS = {
     department: [
         "department",
         "division",
-        "faculty"
+        "faculty",
+        "dept",
+        "team"
     ],
 
     diagnosis: [
         "diagnosis",
         "disease",
         "illness",
-        "condition"
+        "condition",
+        "medical condition"
     ],
 
     salary: [
         "salary",
         "income",
         "pay",
-        "wage"
+        "wage",
+        "compensation"
     ],
 
     revenue: [
         "revenue",
         "sales",
         "income"
+    ],
+
+    cost: [
+        "cost",
+        "expenses",
+        "expense"
     ],
 
     quantity: [
@@ -80,6 +91,32 @@ const COLUMN_SYNONYMS = {
         "average mark",
         "mark",
         "score"
+    ],
+
+    email: [
+        "email",
+        "email address",
+        "e-mail"
+    ],
+
+    phone: [
+        "phone",
+        "phone number",
+        "contact number",
+        "mobile"
+    ],
+
+    address: [
+        "address",
+        "home address",
+        "location"
+    ],
+
+    date: [
+        "date",
+        "admission date",
+        "hire date",
+        "start date"
     ]
 
 };
@@ -150,7 +187,7 @@ function findBestColumn(columns, userWord) {
 
     });
 
-    return bestColumn;
+    return bestScore > 0 ? bestColumn : null;
 
 }
 

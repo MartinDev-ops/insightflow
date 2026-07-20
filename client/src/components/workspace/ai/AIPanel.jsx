@@ -1,6 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 
-function AIPanel({ workbook }) {
+import applyAIResult from "../../../ai/applyAIResult";
+
+function AIPanel({
+
+    workbook,
+
+    onWorkbookUpdate
+
+}) {
 
     const [question, setQuestion] = useState("");
 
@@ -18,7 +26,9 @@ function AIPanel({ workbook }) {
     useEffect(() => {
 
         messagesEndRef.current?.scrollIntoView({
+
             behavior: "smooth"
+
         });
 
     }, [messages, loading]);
@@ -30,11 +40,17 @@ function AIPanel({ workbook }) {
         const userMessage = question.trim();
 
         setMessages(prev => [
+
             ...prev,
+
             {
+
                 role: "user",
+
                 text: userMessage
+
             }
+
         ]);
 
         setQuestion("");
@@ -48,24 +64,93 @@ function AIPanel({ workbook }) {
                 method: "POST",
 
                 headers: {
+
                     "Content-Type": "application/json"
+
                 },
 
                 body: JSON.stringify({
+
                     workbook,
+
                     question: userMessage
+
                 })
 
             });
 
             const result = await response.json();
 
+            console.log(result);
+
+            //---------------------------------------
+            // Apply AI result to spreadsheet
+            //---------------------------------------
+
+            if (result.result) {
+
+                applyAIResult(
+
+                    window.univerAPI,
+
+                    result.result
+
+                );
+
+            }
+
+            //---------------------------------------
+            // Update workbook if backend returned one
+            //---------------------------------------
+
+            if (
+
+                result.result?.type === "workbook" &&
+
+                result.result.workbook &&
+
+                onWorkbookUpdate
+
+            ) {
+
+                onWorkbookUpdate(
+
+                    result.result.workbook
+
+                );
+
+            }
+
+            //---------------------------------------
+            // Display AI response
+            //---------------------------------------
+
+            let reply = "Done.";
+
+            if (result.result?.message) {
+
+                reply = result.result.message;
+
+            }
+
+            else if (result.message) {
+
+                reply = result.message;
+
+            }
+
             setMessages(prev => [
+
                 ...prev,
+
                 {
+
                     role: "assistant",
-                    text: result.message
+
+                    text: reply
+
                 }
+
             ]);
 
         }
@@ -73,11 +158,17 @@ function AIPanel({ workbook }) {
         catch {
 
             setMessages(prev => [
+
                 ...prev,
+
                 {
+
                     role: "assistant",
+
                     text: "Something went wrong."
+
                 }
+
             ]);
 
         }
@@ -97,21 +188,15 @@ function AIPanel({ workbook }) {
                 width: 290,
                 minWidth: 290,
                 maxWidth: 290,
-
                 display: "flex",
                 flexDirection: "column",
-
                 height: "100%",
                 minHeight: 0,
-
                 overflow: "hidden",
-
                 borderLeft: "1px solid #ddd",
                 background: "#fafafa"
             }}
         >
-
-            {/* Header */}
 
             <div
                 style={{
@@ -128,18 +213,13 @@ function AIPanel({ workbook }) {
 
             </div>
 
-            {/* Messages */}
-
             <div
                 style={{
                     flex: 1,
                     minHeight: 0,
-
                     overflowY: "auto",
                     overflowX: "hidden",
-
                     padding: 15,
-
                     display: "flex",
                     flexDirection: "column",
                     gap: 14
@@ -238,19 +318,13 @@ function AIPanel({ workbook }) {
 
             </div>
 
-            {/* Bottom Input */}
-
             <div
                 style={{
                     display: "flex",
                     gap: 10,
-
                     padding: 15,
-
                     borderTop: "1px solid #ddd",
-
                     background: "#fff",
-
                     flexShrink: 0
                 }}
             >

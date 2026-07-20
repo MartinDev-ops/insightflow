@@ -1,5 +1,5 @@
 import WorkspaceToolbar from "./WorkspaceToolbar";
-import AIPanel from "./AIPanel";
+import AIPanel from "./ai/AIPanel";
 
 function WorkspaceLayout({
     children,
@@ -7,7 +7,8 @@ function WorkspaceLayout({
     onImport,
     onClean,
     saving,
-    workbook
+    workbook,
+    onWorkbookUpdate
 }) {
 
     return (
@@ -62,7 +63,13 @@ function WorkspaceLayout({
 
                 </div>
 
-                <AIPanel workbook={workbook} />
+                <AIPanel
+
+                    workbook={workbook}
+
+                    onWorkbookUpdate={onWorkbookUpdate}
+
+                />
 
             </div>
 

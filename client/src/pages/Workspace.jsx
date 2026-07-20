@@ -212,16 +212,27 @@ function Workspace() {
                 }}
             >
 
-                <h1 style={{ margin: 0, flexShrink: 0 }}>
+                <h1
+                    style={{
+                        margin: 0,
+                        flexShrink: 0
+                    }}
+                >
                     Project #{id}
                 </h1>
 
                 <WorkspaceLayout
 
                     workbook={importedWorkbook}
+
+                    onWorkbookUpdate={setImportedWorkbook}
+
                     onSave={handleSave}
+
                     onImport={handleImport}
+
                     onClean={handleClean}
+
                     saving={saving}
 
                 >
@@ -229,7 +240,10 @@ function Workspace() {
                     <SpreadsheetView
 
                         importedWorkbook={importedWorkbook}
+
                         onReady={handleSpreadsheetReady}
+
+                        univerRef={univerRef}
 
                     />
 
@@ -240,8 +254,11 @@ function Workspace() {
             <CleanPreview
 
                 open={showCleanPreview}
+
                 summary={cleanSummary}
+
                 onApply={applyCleaning}
+
                 onCancel={() => setShowCleanPreview(false)}
 
             />

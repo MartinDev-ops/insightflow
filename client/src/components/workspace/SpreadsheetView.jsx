@@ -12,7 +12,8 @@ import "@univerjs/preset-sheets-core/lib/index.css";
 function SpreadsheetView({
     onReady,
     importedWorkbook,
-    onWorkbookChange
+    onWorkbookChange,
+    univerRef
 }) {
 
     const containerRef = useRef(null);
@@ -51,6 +52,13 @@ function SpreadsheetView({
 
         univerAPIRef.current = univerAPI;
 
+        // Make Univer available to parent components
+        if (univerRef) {
+
+            univerRef.current = univerAPI;
+
+        }
+
         univerAPI.createWorkbook({});
 
         const workbook = univerAPI.getActiveWorkbook();
@@ -73,12 +81,6 @@ function SpreadsheetView({
 
         console.log("✅ Univer initialized.");
 
-        // Univer sizes its canvas (and its internal scrollbars) based on
-        // the container's dimensions at the moment it initializes. Since
-        // our container is now sized by flexbox instead of a fixed pixel
-        // height, its final size can settle a moment after mount. Without
-        // this, Univer's grid/scrollbar can end up drawn for a stale size,
-        // which is what causes the floating/misplaced scrollbar artifact.
         const resizeObserver = new ResizeObserver(() => {
 
             window.dispatchEvent(new Event("resize"));

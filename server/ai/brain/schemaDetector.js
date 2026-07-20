@@ -1,125 +1,105 @@
-function detectSchema(workbook) {
 
-    if (!workbook || !Array.isArray(workbook)) {
+
+function normalizeValue(cell) {
+
+    return cell && cell.value !== undefined && cell.value !== null
+        ? cell.value
+        : "";
+
+}
+
+function detectColumnType(values) {
+
+    const nonEmpty = values
+        .map(v => String(v).trim())
+        .filter(v => v !== "");
+
+    if (nonEmpty.length === 0) {
+
+        return "string";
+
+    }
+
+    const allNumbers = nonEmpty.every(v => !isNaN(Number(v)));
+
+    if (allNumbers) {
+
+        return "number";
+
+    }
+
+    const allDates = nonEmpty.every(v => {
+
+        const asDate = new Date(v);
+
+        return !isNaN(asDate.getTime()) && /\d{4}/.test(v);
+
+    });
+
+    if (allDates) {
+
+        return "date";
+
+    }
+
+    return "string";
+
+}
+
+function detectSheetSchema(sheet) {
+
+    if (!sheet || !sheet.rows || sheet.rows.length === 0) {
 
         return {
-
-            sheets: [],
-            entities: [],
+            sheet: sheet ? sheet.name : null,
             columns: [],
-            examples: {}
-
+            rowCount: 0
         };
 
     }
 
-    const schema = {
+    const headerRow = sheet.rows[0];
 
-        sheets: [],
-        entities: [],
-        columns: [],
-        examples: {}
+    const headers = headerRow.cells.map(cell =>
+        String(normalizeValue(cell)).trim()
+    );
 
-    };
+    const dataRows = sheet.rows.slice(1);
 
-    workbook.forEach(sheet => {
+    const columns = headers.map((header, colIndex) => {
 
-        schema.sheets.push(sheet.name);
+        const columnValues = dataRows.map(row =>
+            normalizeValue(row.cells[colIndex])
+        );
 
-        if (!sheet.rows || sheet.rows.length === 0) {
-
-            return;
-
-        }
-
-        const headerRow = sheet.rows[0];
-
-        if (!headerRow.cells) {
-
-            return;
-
-        }
-
-        headerRow.cells.forEach(cell => {
-
-            if (!cell) return;
-
-            const value = String(cell.value || "").trim();
-
-            if (!value) return;
-
-            schema.columns.push(value);
-
-            schema.examples[value] = [];
-
-        });
-
-        const sampleRows = sheet.rows.slice(1, 6);
-
-        sampleRows.forEach(row => {
-
-            row.cells.forEach((cell, index) => {
-
-                const column = schema.columns[index];
-
-                if (!column) return;
-
-                schema.examples[column].push(cell?.value);
-
-            });
-
-        });
+        return {
+            name: header,
+            type: detectColumnType(columnValues)
+        };
 
     });
 
-    const joined = schema.columns.join(" ").toLowerCase();
+    return {
+        sheet: sheet.name,
+        columns,
+        rowCount: dataRows.length
+    };
 
-    if (
-        joined.includes("student") ||
-        joined.includes("enrol") ||
-        joined.includes("course")
-    ) {
+}
 
-        schema.entities.push("students");
+// Returns schema for every sheet in the workbook.
+function detectSchema(workbook) {
 
-    }
+    if (!workbook || !Array.isArray(workbook)) {
 
-    if (
-        joined.includes("employee") ||
-        joined.includes("salary") ||
-        joined.includes("department")
-    ) {
-
-        schema.entities.push("employees");
+        return [];
 
     }
 
-    if (
-        joined.includes("patient") ||
-        joined.includes("diagnosis") ||
-        joined.includes("disease")
-    ) {
-
-        schema.entities.push("patients");
-
-    }
-
-    if (
-        joined.includes("product") ||
-        joined.includes("price") ||
-        joined.includes("stock")
-    ) {
-
-        schema.entities.push("products");
-
-    }
-
-    return schema;
+    return workbook.map(sheet => detectSheetSchema(sheet));
 
 }
 
 module.exports = {
-
     detectSchema
-
 };

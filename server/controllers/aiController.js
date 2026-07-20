@@ -11,7 +11,13 @@ const { resolveColumns } = require("../ai/semantic/resolveColumns");
 
 const executeIntent = require("../ai/executor/workbookExecutor");
 
+const editorEngine = require("../ai/editor/editorEngine");
+
+const { formatResult } = require("../ai/formatter/resultFormatter");
+
 const conversationMemory = require("../ai/memory/conversationMemory");
+
+const { classifyQuestion } = require("../ai/planner/planner");
 
 async function askAI(req, res) {
 
@@ -24,30 +30,47 @@ async function askAI(req, res) {
 
         } = req.body;
 
-        // ---------------------------------
+        //---------------------------------
+        // Planner
+        //---------------------------------
+
+        const requestType =
+            classifyQuestion(question);
+
+        //---------------------------------
         // Conversation Memory
-        // ---------------------------------
+        //---------------------------------
 
         const memory =
             conversationMemory.getConversation();
 
-        // ---------------------------------
+        //---------------------------------
         // Workbook Context
-        // ---------------------------------
+        //---------------------------------
 
         const workbookContext =
-            buildWorkbookContext(workbook);
 
-        // ---------------------------------
-        // Detect Workbook Schema
-        // ---------------------------------
+            requestType === "general"
+
+                ? null
+
+                : buildWorkbookContext(workbook);
+
+        //---------------------------------
+        // Detect Workbook Entity
+        //---------------------------------
 
         const entity =
-            detectWorkbookEntity(workbookContext);
 
-        // ---------------------------------
-        // Build Prompt
-        // ---------------------------------
+            workbookContext
+
+                ? detectWorkbookEntity(workbookContext)
+
+                : null;
+
+        //---------------------------------
+        // Prompt
+        //---------------------------------
 
         const prompt =
             buildPrompt({
@@ -58,40 +81,49 @@ async function askAI(req, res) {
 
                 schema: entity,
 
-                memory
+                memory,
+
+                requestType
 
             });
 
-        // ---------------------------------
-        // Ask Gemini
-        // ---------------------------------
+        //---------------------------------
+        // Gemini
+        //---------------------------------
 
         const response =
             await askGemini(prompt);
 
-        // ---------------------------------
-        // Translate Gemini JSON
-        // ---------------------------------
+        //---------------------------------
+        // Translate
+        //---------------------------------
 
         const aiResponse =
             translate(response);
 
-        // ---------------------------------
-        // Resolve Semantic Column Names
-        // ---------------------------------
+        //---------------------------------
+        // Resolve Semantic Columns
+        //---------------------------------
 
         const resolvedResponse =
             resolveColumns(
+
                 workbook,
+
                 aiResponse
+
             );
 
-        // ---------------------------------
-        // Validate Intent
-        // ---------------------------------
+        //---------------------------------
+        // Validate
+        //---------------------------------
 
         const validation =
-            validateIntent(resolvedResponse);
+            validateIntent(
+
+                resolvedResponse
+
+            );
 
         if (!validation.valid) {
 
@@ -105,19 +137,52 @@ async function askAI(req, res) {
 
         }
 
-        // ---------------------------------
-        // Execute Intent
-        // ---------------------------------
+        //---------------------------------
+        // Execute
+        //---------------------------------
 
-        const result =
-            await executeIntent(
-                workbook,
-                resolvedResponse
-            );
+        let result;
 
-        // ---------------------------------
+        if (
+
+            resolvedResponse.route === "edit"
+
+        ) {
+
+            result =
+                await editorEngine(
+
+                    workbook,
+
+                    resolvedResponse
+
+                );
+
+        }
+
+        else {
+
+            result =
+                await executeIntent(
+
+                    workbook,
+
+                    resolvedResponse
+
+                );
+
+        }
+
+        //---------------------------------
+        // Format Result
+        //---------------------------------
+
+        const formattedResult =
+            formatResult(result);
+
+        //---------------------------------
         // Save Conversation
-        // ---------------------------------
+        //---------------------------------
 
         conversationMemory.addMessage({
 
@@ -127,15 +192,17 @@ async function askAI(req, res) {
 
         });
 
-        // ---------------------------------
-        // Return Result
-        // ---------------------------------
+        //---------------------------------
+        // Response
+        //---------------------------------
 
         return res.json({
 
             success: true,
 
-            result
+            result: formattedResult,
+
+            requestType
 
         });
 
