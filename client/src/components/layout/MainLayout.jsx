@@ -16,28 +16,25 @@ function MainLayout({ children }) {
 
             <div
                 style={{
-                    flexShrink: 0,
-                    padding: "10px 16px 0 16px"
+                    padding: "10px 16px 0",
+                    flexShrink: 0
                 }}
             >
-
                 <Header />
-
             </div>
 
             <div
                 style={{
                     flex: 1,
-                    padding: "10px 16px 16px 16px",
-                    overflow: "hidden",
+                    minHeight: 0,
+                    padding: "10px 16px 16px",
                     display: "flex",
                     flexDirection: "column",
-                    minHeight: 0
+                    overflowY: "auto",
+                    overflowX: "hidden"
                 }}
             >
-
                 {children}
-
             </div>
 
         </div>

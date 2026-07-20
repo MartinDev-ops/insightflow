@@ -75,6 +75,8 @@ function Dashboard() {
 
                 style={{
 
+                    alignSelf: "flex-start",
+
                     marginTop: "30px",
 
                     padding: "14px 24px",
@@ -109,4 +111,4 @@ function Dashboard() {
 
 }
 
-export default Dashboard; 
+export default Dashboard;

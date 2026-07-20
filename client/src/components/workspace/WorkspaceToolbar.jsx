@@ -36,67 +36,48 @@ function WorkspaceToolbar({
         <div
             style={{
                 display: "flex",
-                gap: "12px",
-                padding: "15px",
+                alignItems: "center",
+                gap: 12,
+                padding: 15,
                 borderBottom: "1px solid #ddd",
-                background: "#fff"
+                background: "#fff",
+                flexShrink: 0
             }}
         >
 
             <button
-
                 onClick={onSave}
-
                 disabled={saving}
-
             >
-
                 {saving ? "⏳ Saving..." : "💾 Save"}
-
             </button>
 
             <button onClick={handleImportClick}>
-
                 📂 Import Excel
-
             </button>
 
             <button onClick={onClean}>
-
                 🧹 Clean Data
-
             </button>
 
             <button>
-
                 📤 Export Excel
-
             </button>
 
             <button>
-
                 🤖 AI Analyze
-
             </button>
 
             <button>
-
                 🔄 Refresh
-
             </button>
 
             <input
-
                 type="file"
-
                 accept=".xlsx,.xls"
-
                 ref={fileInputRef}
-
                 onChange={handleFileChange}
-
                 style={{ display: "none" }}
-
             />
 
         </div>

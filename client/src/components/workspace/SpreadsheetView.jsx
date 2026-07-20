@@ -16,18 +16,12 @@ function SpreadsheetView({
 }) {
 
     const containerRef = useRef(null);
-
     const univerAPIRef = useRef(null);
-
     const initializedRef = useRef(false);
 
     useEffect(() => {
 
-        if (initializedRef.current) {
-
-            return;
-
-        }
+        if (initializedRef.current) return;
 
         initializedRef.current = true;
 
@@ -79,7 +73,27 @@ function SpreadsheetView({
 
         console.log("✅ Univer initialized.");
 
+        // Univer sizes its canvas (and its internal scrollbars) based on
+        // the container's dimensions at the moment it initializes. Since
+        // our container is now sized by flexbox instead of a fixed pixel
+        // height, its final size can settle a moment after mount. Without
+        // this, Univer's grid/scrollbar can end up drawn for a stale size,
+        // which is what causes the floating/misplaced scrollbar artifact.
+        const resizeObserver = new ResizeObserver(() => {
+
+            window.dispatchEvent(new Event("resize"));
+
+        });
+
+        if (containerRef.current) {
+
+            resizeObserver.observe(containerRef.current);
+
+        }
+
         return () => {
+
+            resizeObserver.disconnect();
 
             univerAPI.dispose();
 
@@ -89,21 +103,8 @@ function SpreadsheetView({
 
     useEffect(() => {
 
-        if (!univerAPIRef.current) {
-
-            return;
-
-        }
-
-        if (!importedWorkbook) {
-
-            return;
-
-        }
-
-        // -----------------------------
-        // Load saved Univer workbook
-        // -----------------------------
+        if (!univerAPIRef.current) return;
+        if (!importedWorkbook) return;
 
         if (importedWorkbook.sheets && importedWorkbook.sheetOrder) {
 
@@ -130,19 +131,13 @@ function SpreadsheetView({
 
             }
 
-            univerAPIRef.current.createWorkbook(
-                importedWorkbook
-            );
+            univerAPIRef.current.createWorkbook(importedWorkbook);
 
             console.log("✅ Workbook loaded.");
 
             return;
 
         }
-
-        // -----------------------------
-        // Excel Import
-        // -----------------------------
 
         console.log("Importing Excel workbook...");
 
@@ -156,17 +151,17 @@ function SpreadsheetView({
     return (
 
         <div
-
             ref={containerRef}
-
             style={{
-
+                flex: 1,
                 width: "100%",
-
-                height: "700px"
-
+                height: "100%",
+                minWidth: 0,
+                minHeight: 0,
+                background: "#ffffff",
+                borderRadius: 8,
+                overflow: "hidden"
             }}
-
         />
 
     );

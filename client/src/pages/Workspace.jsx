@@ -24,13 +24,11 @@ function Workspace() {
     const [showCleanPreview, setShowCleanPreview] = useState(false);
 
     const [cleanSummary, setCleanSummary] = useState({
-
         duplicates: 0,
         emptyCells: 0,
         phoneNumbers: 0,
         dates: 0,
         trimmed: 0
-
     });
 
     function handleSpreadsheetReady(univerAPI) {
@@ -131,9 +129,10 @@ function Workspace() {
 
             if (!univerRef.current) return;
 
-            const workbook = univerRef.current
-                .getActiveWorkbook()
-                .save();
+            const workbook =
+                univerRef.current
+                    .getActiveWorkbook()
+                    .save();
 
             const result = await cleanWorkbook(workbook);
 
@@ -203,26 +202,40 @@ function Workspace() {
 
         <MainLayout>
 
-            <h1>Project #{id}</h1>
-
-            <WorkspaceLayout
-
-                workbook={importedWorkbook}
-                onSave={handleSave}
-                onImport={handleImport}
-                onClean={handleClean}
-                saving={saving}
-
+            <div
+                style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 12,
+                    height: "100%",
+                    minHeight: 0
+                }}
             >
 
-                <SpreadsheetView
+                <h1 style={{ margin: 0, flexShrink: 0 }}>
+                    Project #{id}
+                </h1>
 
-                    importedWorkbook={importedWorkbook}
-                    onReady={handleSpreadsheetReady}
+                <WorkspaceLayout
 
-                />
+                    workbook={importedWorkbook}
+                    onSave={handleSave}
+                    onImport={handleImport}
+                    onClean={handleClean}
+                    saving={saving}
 
-            </WorkspaceLayout>
+                >
+
+                    <SpreadsheetView
+
+                        importedWorkbook={importedWorkbook}
+                        onReady={handleSpreadsheetReady}
+
+                    />
+
+                </WorkspaceLayout>
+
+            </div>
 
             <CleanPreview
 
