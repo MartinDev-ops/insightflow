@@ -1,8 +1,9 @@
 const { detectSchema } = require("./schemaDetector");
 
-function buildContext(workbook) {
+function buildWorkbookContext(workbook) {
 
-    const schema = detectSchema(workbook);
+    const schema =
+        detectSchema(workbook);
 
     return {
 
@@ -15,8 +16,11 @@ function buildContext(workbook) {
             rowCount: sheetSchema.rowCount,
 
             columns: sheetSchema.columns.map(col => ({
+
                 name: col.name,
+
                 type: col.type
+
             }))
 
         }))
@@ -26,5 +30,7 @@ function buildContext(workbook) {
 }
 
 module.exports = {
-    buildContext
+
+    buildWorkbookContext
+
 };

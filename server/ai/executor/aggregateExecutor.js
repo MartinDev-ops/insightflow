@@ -1,3 +1,43 @@
+// Maps common natural-language phrasings to the exact function values
+// this executor knows how to run. The prompt already instructs Gemini to
+// use exactly "sum" | "average" | "count" | "min" | "max", so this is a
+// safety net for the rare case it doesn't, not the primary defense.
+const FUNCTION_ALIASES = {
+
+    sum: "sum",
+    total: "sum",
+    totalsum: "sum",
+
+    average: "average",
+    avg: "average",
+    mean: "average",
+
+    count: "count",
+    total_count: "count",
+    number: "count",
+
+    max: "max",
+    maximum: "max",
+    highest: "max",
+
+    min: "min",
+    minimum: "min",
+    lowest: "min"
+
+};
+
+function normalizeFunction(rawFunction) {
+
+    if (!rawFunction) return null;
+
+    const key = String(rawFunction)
+        .toLowerCase()
+        .replace(/[^a-z]/g, "");
+
+    return FUNCTION_ALIASES[key] || null;
+
+}
+
 function aggregateExecutor(workbook, aiResponse) {
 
     if (!workbook || !Array.isArray(workbook)) {
@@ -15,14 +55,16 @@ function aggregateExecutor(workbook, aiResponse) {
     const {
 
         sheet,
-
-        operation,
-
         column,
-
         conditions = []
 
     } = aiResponse;
+
+    // "function" is a reserved word, so it can't be destructured directly -
+    // this is the field the prompt actually tells Gemini to use.
+    const rawFunction = aiResponse.function;
+
+    const fn = normalizeFunction(rawFunction);
 
     const targetSheet =
         workbook.find(s => s.name === sheet) || workbook[0];
@@ -76,7 +118,7 @@ function aggregateExecutor(workbook, aiResponse) {
     // COUNT
     // -----------------------
 
-    if (operation === "count") {
+    if (fn === "count") {
 
         return {
 
@@ -85,6 +127,18 @@ function aggregateExecutor(workbook, aiResponse) {
             label: "Count",
 
             value: rows.length
+
+        };
+
+    }
+
+    if (!fn) {
+
+        return {
+
+            type: "message",
+
+            message: `Unknown aggregate function: "${rawFunction}".`
 
         };
 
@@ -125,7 +179,7 @@ function aggregateExecutor(workbook, aiResponse) {
     // SUM
     // -----------------------
 
-    if (operation === "sum") {
+    if (fn === "sum") {
 
         return {
 
@@ -144,7 +198,7 @@ function aggregateExecutor(workbook, aiResponse) {
     // AVERAGE
     // -----------------------
 
-    if (operation === "average") {
+    if (fn === "average") {
 
         return {
 
@@ -164,7 +218,7 @@ function aggregateExecutor(workbook, aiResponse) {
     // MAX
     // -----------------------
 
-    if (operation === "max") {
+    if (fn === "max") {
 
         return {
 
@@ -182,7 +236,7 @@ function aggregateExecutor(workbook, aiResponse) {
     // MIN
     // -----------------------
 
-    if (operation === "min") {
+    if (fn === "min") {
 
         return {
 
@@ -200,7 +254,7 @@ function aggregateExecutor(workbook, aiResponse) {
 
         type: "message",
 
-        message: "Unknown aggregate operation."
+        message: "Unknown aggregate function."
 
     };
 

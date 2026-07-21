@@ -1,9 +1,11 @@
-
-
 function normalizeValue(cell) {
 
-    return cell && cell.value !== undefined && cell.value !== null
+    return cell &&
+        cell.value !== undefined &&
+        cell.value !== null
+
         ? cell.value
+
         : "";
 
 }
@@ -11,8 +13,10 @@ function normalizeValue(cell) {
 function detectColumnType(values) {
 
     const nonEmpty = values
-        .map(v => String(v).trim())
-        .filter(v => v !== "");
+
+        .map(value => String(value).trim())
+
+        .filter(value => value !== "");
 
     if (nonEmpty.length === 0) {
 
@@ -20,7 +24,11 @@ function detectColumnType(values) {
 
     }
 
-    const allNumbers = nonEmpty.every(v => !isNaN(Number(v)));
+    const allNumbers = nonEmpty.every(
+
+        value => !isNaN(Number(value))
+
+    );
 
     if (allNumbers) {
 
@@ -28,11 +36,17 @@ function detectColumnType(values) {
 
     }
 
-    const allDates = nonEmpty.every(v => {
+    const allDates = nonEmpty.every(value => {
 
-        const asDate = new Date(v);
+        const date = new Date(value);
 
-        return !isNaN(asDate.getTime()) && /\d{4}/.test(v);
+        return (
+
+            !isNaN(date.getTime()) &&
+
+            /\d{4}/.test(value)
+
+        );
 
     });
 
@@ -48,58 +62,116 @@ function detectColumnType(values) {
 
 function detectSheetSchema(sheet) {
 
-    if (!sheet || !sheet.rows || sheet.rows.length === 0) {
+    if (
+
+        !sheet ||
+
+        !sheet.rows ||
+
+        sheet.rows.length === 0
+
+    ) {
 
         return {
-            sheet: sheet ? sheet.name : null,
+
+            sheet: sheet
+
+                ? sheet.name
+
+                : null,
+
             columns: [],
+
             rowCount: 0
+
         };
 
     }
 
     const headerRow = sheet.rows[0];
 
-    const headers = headerRow.cells.map(cell =>
-        String(normalizeValue(cell)).trim()
-    );
+    const headers =
 
-    const dataRows = sheet.rows.slice(1);
+        headerRow.cells.map(cell =>
 
-    const columns = headers.map((header, colIndex) => {
+            String(
 
-        const columnValues = dataRows.map(row =>
-            normalizeValue(row.cells[colIndex])
+                normalizeValue(cell)
+
+            ).trim()
+
         );
 
-        return {
-            name: header,
-            type: detectColumnType(columnValues)
-        };
+    const dataRows =
 
-    });
+        sheet.rows.slice(1);
+
+    const columns =
+
+        headers.map((header, columnIndex) => {
+
+            const columnValues =
+
+                dataRows.map(row =>
+
+                    normalizeValue(
+
+                        row.cells[columnIndex]
+
+                    )
+
+                );
+
+            return {
+
+                name: header,
+
+                type: detectColumnType(
+
+                    columnValues
+
+                )
+
+            };
+
+        });
 
     return {
+
         sheet: sheet.name,
+
         columns,
+
         rowCount: dataRows.length
+
     };
 
 }
 
-// Returns schema for every sheet in the workbook.
 function detectSchema(workbook) {
 
-    if (!workbook || !Array.isArray(workbook)) {
+    if (
+
+        !workbook ||
+
+        !Array.isArray(workbook)
+
+    ) {
 
         return [];
 
     }
 
-    return workbook.map(sheet => detectSheetSchema(sheet));
+    return workbook.map(sheet =>
+
+        detectSheetSchema(sheet)
+
+    );
 
 }
 
 module.exports = {
+
     detectSchema
+
 };

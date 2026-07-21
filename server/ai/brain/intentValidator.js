@@ -108,9 +108,15 @@ const INTENT_CHECKS = {
 
     aggregate(aiResponse) {
 
-        const allowedFunctions = ["sum", "average", "count", "min", "max"];
+        const allowedFunctions = [
+            "sum", "total",
+            "average", "avg", "mean",
+            "count", "number",
+            "max", "maximum", "highest",
+            "min", "minimum", "lowest"
+        ];
 
-        if (!allowedFunctions.includes(aiResponse.function)) {
+        if (!allowedFunctions.includes(String(aiResponse.function).toLowerCase())) {
 
             return `aggregate function "${aiResponse.function}" is not supported`;
 

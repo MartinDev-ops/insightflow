@@ -22,9 +22,12 @@ const memory = {
 
     lastQuestion: null,
 
-    lastAnswer: null
+    lastAnswer: null,
+
+    conversation: []
 
 };
+
 
 function updateMemory(data) {
 
@@ -32,11 +35,48 @@ function updateMemory(data) {
 
 }
 
+
 function getMemory() {
 
     return memory;
 
 }
+
+
+function getConversation() {
+
+    return memory.conversation;
+
+}
+
+
+function addMessage({
+
+    question,
+
+    response
+
+}) {
+
+    memory.conversation.push({
+
+        question,
+
+        response,
+
+        timestamp:
+            new Date().toISOString()
+
+    });
+
+    memory.lastQuestion =
+        question;
+
+    memory.lastAnswer =
+        response;
+
+}
+
 
 function clearMemory() {
 
@@ -64,13 +104,20 @@ function clearMemory() {
 
     memory.lastAnswer = null;
 
+    memory.conversation = [];
+
 }
+
 
 module.exports = {
 
     updateMemory,
 
     getMemory,
+
+    getConversation,
+
+    addMessage,
 
     clearMemory
 

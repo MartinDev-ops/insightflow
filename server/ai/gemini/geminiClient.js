@@ -1,5 +1,10 @@
 require("dotenv").config();
 
+console.log(
+    "Gemini API key loaded:",
+    process.env.GEMINI_API_KEY ? "YES" : "NO"
+);
+
 const { GoogleGenAI } = require("@google/genai");
 
 const ai = new GoogleGenAI({
@@ -14,7 +19,7 @@ async function askGemini(prompt) {
 
         const response = await ai.models.generateContent({
 
-            model: "gemini-2.5-flash",
+            model: "gemini-flash-latest",
 
             contents: prompt
 

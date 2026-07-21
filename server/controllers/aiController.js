@@ -1,23 +1,37 @@
-const { buildWorkbookContext } = require("../ai/brain/contextBuilder");
-const { detectWorkbookEntity } = require("../ai/brain/schemaDetector");
-const { validateIntent } = require("../ai/brain/intentValidator");
-const { buildPrompt } = require("../ai/brain/promptBuilder");
+const {
+    buildWorkbookContext
+} = require("../ai/brain/contextBuilder");
 
-const { askGemini } = require("../ai/gemini/geminiClient");
+const {
+    validateIntent
+} = require("../ai/brain/intentValidator");
 
-const { translate } = require("../ai/translator/jsonTranslator");
+const {
+    buildPrompt
+} = require("../ai/brain/promptBuilder");
 
-const { resolveColumns } = require("../ai/semantic/resolveColumns");
+const {
+    askGemini
+} = require("../ai/gemini/geminiClient");
 
-const executeIntent = require("../ai/executor/workbookExecutor");
+const {
+    translate
+} = require("../ai/translator/jsonTranslator");
 
-const editorEngine = require("../ai/editor/editorEngine");
+const {
+    resolveColumns
+} = require("../ai/semantic/resolveColumns");
 
-const { formatResult } = require("../ai/formatter/resultFormatter");
+const executeIntent =
+    require("../ai/executor/workbookExecutor");
 
-const conversationMemory = require("../ai/memory/conversationMemory");
+const conversationMemory =
+    require("../ai/memory/conversationMemory");
 
-const { classifyQuestion } = require("../ai/planner/planner");
+const {
+    classifyQuestion
+} = require("../ai/planner/planner");
+
 
 async function askAI(req, res) {
 
@@ -26,9 +40,11 @@ async function askAI(req, res) {
         const {
 
             workbook,
+
             question
 
         } = req.body;
+
 
         //---------------------------------
         // Planner
@@ -37,12 +53,15 @@ async function askAI(req, res) {
         const requestType =
             classifyQuestion(question);
 
+
         //---------------------------------
         // Conversation Memory
         //---------------------------------
 
         const memory =
-            conversationMemory.getConversation();
+            conversationMemory
+                .getConversation();
+
 
         //---------------------------------
         // Workbook Context
@@ -54,22 +73,15 @@ async function askAI(req, res) {
 
                 ? null
 
-                : buildWorkbookContext(workbook);
+                : buildWorkbookContext(
+
+                    workbook
+
+                );
+
 
         //---------------------------------
-        // Detect Workbook Entity
-        //---------------------------------
-
-        const entity =
-
-            workbookContext
-
-                ? detectWorkbookEntity(workbookContext)
-
-                : null;
-
-        //---------------------------------
-        // Prompt
+        // Build Prompt
         //---------------------------------
 
         const prompt =
@@ -79,7 +91,7 @@ async function askAI(req, res) {
 
                 workbookContext,
 
-                schema: entity,
+                schema: workbookContext,
 
                 memory,
 
@@ -87,19 +99,30 @@ async function askAI(req, res) {
 
             });
 
+
         //---------------------------------
-        // Gemini
+        // Ask Gemini
         //---------------------------------
 
         const response =
-            await askGemini(prompt);
+            await askGemini(
+
+                prompt
+
+            );
+
 
         //---------------------------------
-        // Translate
+        // Translate Gemini JSON
         //---------------------------------
 
         const aiResponse =
-            translate(response);
+            translate(
+
+                response
+
+            );
+
 
         //---------------------------------
         // Resolve Semantic Columns
@@ -114,8 +137,9 @@ async function askAI(req, res) {
 
             );
 
+
         //---------------------------------
-        // Validate
+        // Validate Intent
         //---------------------------------
 
         const validation =
@@ -125,60 +149,34 @@ async function askAI(req, res) {
 
             );
 
+
         if (!validation.valid) {
 
             return res.json({
 
                 success: false,
 
-                message: validation.message
+                message:
+                    validation.reason
 
             });
 
         }
 
-        //---------------------------------
-        // Execute
-        //---------------------------------
-
-        let result;
-
-        if (
-
-            resolvedResponse.route === "edit"
-
-        ) {
-
-            result =
-                await editorEngine(
-
-                    workbook,
-
-                    resolvedResponse
-
-                );
-
-        }
-
-        else {
-
-            result =
-                await executeIntent(
-
-                    workbook,
-
-                    resolvedResponse
-
-                );
-
-        }
 
         //---------------------------------
-        // Format Result
+        // Execute Intent
         //---------------------------------
 
-        const formattedResult =
-            formatResult(result);
+        const result =
+            await executeIntent(
+
+                workbook,
+
+                resolvedResponse
+
+            );
+
 
         //---------------------------------
         // Save Conversation
@@ -188,19 +186,21 @@ async function askAI(req, res) {
 
             question,
 
-            response: resolvedResponse
+            response:
+                resolvedResponse
 
         });
 
+
         //---------------------------------
-        // Response
+        // Return Result
         //---------------------------------
 
         return res.json({
 
             success: true,
 
-            result: formattedResult,
+            result,
 
             requestType
 
@@ -208,21 +208,25 @@ async function askAI(req, res) {
 
     }
 
+
     catch (error) {
 
         console.error(error);
+
 
         return res.status(500).json({
 
             success: false,
 
-            message: error.message
+            message:
+                error.message
 
         });
 
     }
 
 }
+
 
 module.exports = {
 
