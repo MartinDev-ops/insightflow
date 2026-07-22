@@ -1,7 +1,3 @@
-// Maps common natural-language phrasings to the exact function values
-// this executor knows how to run. The prompt already instructs Gemini to
-// use exactly "sum" | "average" | "count" | "min" | "max", so this is a
-// safety net for the rare case it doesn't, not the primary defense.
 const FUNCTION_ALIASES = {
 
     sum: "sum",
@@ -38,6 +34,16 @@ function normalizeFunction(rawFunction) {
 
 }
 
+function formatNumber(value) {
+
+    return new Intl.NumberFormat("en-ZA", {
+
+        maximumFractionDigits: 2
+
+    }).format(value);
+
+}
+
 function aggregateExecutor(workbook, aiResponse) {
 
     if (!workbook || !Array.isArray(workbook)) {
@@ -55,19 +61,24 @@ function aggregateExecutor(workbook, aiResponse) {
     const {
 
         sheet,
+
         column,
+
         conditions = []
 
     } = aiResponse;
 
-    // "function" is a reserved word, so it can't be destructured directly -
-    // this is the field the prompt actually tells Gemini to use.
     const rawFunction = aiResponse.function;
 
     const fn = normalizeFunction(rawFunction);
 
     const targetSheet =
-        workbook.find(s => s.name === sheet) || workbook[0];
+
+        workbook.find(s => s.name === sheet)
+
+        ||
+
+        workbook[0];
 
     if (!targetSheet || !targetSheet.rows?.length) {
 
@@ -84,7 +95,9 @@ function aggregateExecutor(workbook, aiResponse) {
     const headerRow = targetSheet.rows[0];
 
     const headers = headerRow.cells.map(cell =>
+
         String(cell.value || "").trim()
+
     );
 
     let rows = targetSheet.rows.slice(1);
@@ -96,6 +109,7 @@ function aggregateExecutor(workbook, aiResponse) {
     conditions.forEach(condition => {
 
         const columnIndex =
+
             headers.indexOf(condition.column);
 
         if (columnIndex === -1) return;
@@ -103,11 +117,19 @@ function aggregateExecutor(workbook, aiResponse) {
         rows = rows.filter(row => {
 
             const value =
-                String(row.cells[columnIndex]?.value ?? "")
-                    .toLowerCase();
+
+                String(
+
+                    row.cells[columnIndex]?.value ?? ""
+
+                ).toLowerCase();
 
             return value.includes(
-                String(condition.value).toLowerCase()
+
+                String(condition.value)
+
+                    .toLowerCase()
+
             );
 
         });
@@ -120,13 +142,21 @@ function aggregateExecutor(workbook, aiResponse) {
 
     if (fn === "count") {
 
+        const value = rows.length;
+
         return {
 
             type: "metric",
 
             label: "Count",
 
-            value: rows.length
+            value,
+
+            message:
+
+                `There are ${formatNumber(value)} ` +
+
+                `matching record${value === 1 ? "" : "s"}.`
 
         };
 
@@ -138,13 +168,16 @@ function aggregateExecutor(workbook, aiResponse) {
 
             type: "message",
 
-            message: `Unknown aggregate function: "${rawFunction}".`
+            message:
+
+                `Unknown aggregate function: "${rawFunction}".`
 
         };
 
     }
 
     const valueColumn =
+
         headers.indexOf(column);
 
     if (valueColumn === -1) {
@@ -153,15 +186,27 @@ function aggregateExecutor(workbook, aiResponse) {
 
             type: "message",
 
-            message: "Column not found."
+            message:
+
+                `I could not find the column "${column}".`
 
         };
 
     }
 
     const numbers = rows
-        .map(r => Number(r.cells[valueColumn]?.value))
-        .filter(n => !isNaN(n));
+
+        .map(row =>
+
+            Number(
+
+                row.cells[valueColumn]?.value
+
+            )
+
+        )
+
+        .filter(number => !isNaN(number));
 
     if (numbers.length === 0) {
 
@@ -169,7 +214,9 @@ function aggregateExecutor(workbook, aiResponse) {
 
             type: "message",
 
-            message: "No numeric values."
+            message:
+
+                `There are no numeric values in the "${column}" column.`
 
         };
 
@@ -181,14 +228,27 @@ function aggregateExecutor(workbook, aiResponse) {
 
     if (fn === "sum") {
 
+        const value =
+
+            numbers.reduce(
+
+                (a, b) => a + b,
+
+                0
+
+            );
+
         return {
 
             type: "metric",
 
             label: "Sum",
 
-            value:
-                numbers.reduce((a, b) => a + b, 0)
+            value,
+
+            message:
+
+                `The total ${column} is ${formatNumber(value)}.`
 
         };
 
@@ -200,15 +260,29 @@ function aggregateExecutor(workbook, aiResponse) {
 
     if (fn === "average") {
 
+        const value =
+
+            numbers.reduce(
+
+                (a, b) => a + b,
+
+                0
+
+            ) /
+
+            numbers.length;
+
         return {
 
             type: "metric",
 
             label: "Average",
 
-            value:
-                numbers.reduce((a, b) => a + b, 0) /
-                numbers.length
+            value,
+
+            message:
+
+                `The average ${column} is ${formatNumber(value)}.`
 
         };
 
@@ -220,13 +294,19 @@ function aggregateExecutor(workbook, aiResponse) {
 
     if (fn === "max") {
 
+        const value = Math.max(...numbers);
+
         return {
 
             type: "metric",
 
             label: "Maximum",
 
-            value: Math.max(...numbers)
+            value,
+
+            message:
+
+                `The highest ${column} is ${formatNumber(value)}.`
 
         };
 
@@ -238,13 +318,19 @@ function aggregateExecutor(workbook, aiResponse) {
 
     if (fn === "min") {
 
+        const value = Math.min(...numbers);
+
         return {
 
             type: "metric",
 
             label: "Minimum",
 
-            value: Math.min(...numbers)
+            value,
+
+            message:
+
+                `The lowest ${column} is ${formatNumber(value)}.`
 
         };
 
@@ -254,7 +340,9 @@ function aggregateExecutor(workbook, aiResponse) {
 
         type: "message",
 
-        message: "Unknown aggregate function."
+        message:
+
+            "Unknown aggregate function."
 
     };
 

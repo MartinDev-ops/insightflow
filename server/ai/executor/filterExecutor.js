@@ -9,6 +9,8 @@ function filterExecutor(workbook, aiResponse) {
 
             type: "table",
 
+            message: "No spreadsheet data is available.",
+
             headers: [],
 
             rows: []
@@ -46,6 +48,8 @@ function filterExecutor(workbook, aiResponse) {
         return {
 
             type: "table",
+
+            message: "No spreadsheet data was found.",
 
             headers: [],
 
@@ -128,6 +132,19 @@ function filterExecutor(workbook, aiResponse) {
     return {
 
         type: "table",
+
+        message:
+
+            `Found ${matchedRows.length} matching row${
+
+                matchedRows.length === 1
+
+                    ? ""
+
+                    : "s"
+
+            }.`,
+
 
         headers,
 

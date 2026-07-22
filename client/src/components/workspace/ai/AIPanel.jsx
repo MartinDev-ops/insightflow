@@ -2,42 +2,86 @@ import { useState, useRef, useEffect } from "react";
 
 import applyAIResult from "../../../ai/applyAIResult";
 
+
 function AIPanel({
 
     workbook,
 
-    onWorkbookUpdate
+    onWorkbookUpdate,
+
+    onRestoreOriginal
 
 }) {
 
-    const [question, setQuestion] = useState("");
 
-    const [messages, setMessages] = useState([
-        {
-            role: "assistant",
-            text: "Hi 👋 I'm the InsightFlow Assistant.\n\nAsk me anything about your spreadsheet."
-        }
-    ]);
+    const [question, setQuestion] =
 
-    const [loading, setLoading] = useState(false);
+        useState("");
 
-    const messagesEndRef = useRef(null);
+
+    const [messages, setMessages] =
+
+        useState([
+
+            {
+
+                role: "assistant",
+
+                text:
+
+                    "Hi 👋 I'm the InsightFlow Assistant.\n\nAsk me anything about your spreadsheet."
+
+            }
+
+        ]);
+
+
+    const [loading, setLoading] =
+
+        useState(false);
+
+
+    const [isFiltered, setIsFiltered] =
+
+        useState(false);
+
+
+    const messagesEndRef =
+
+        useRef(null);
+
 
     useEffect(() => {
 
-        messagesEndRef.current?.scrollIntoView({
 
-            behavior: "smooth"
+        messagesEndRef.current
 
-        });
+            ?.scrollIntoView({
 
-    }, [messages, loading]);
+                behavior: "smooth"
+
+            });
+
+
+    }, [
+
+        messages,
+
+        loading
+
+    ]);
+
 
     async function askAI() {
 
+
         if (!question.trim()) return;
 
-        const userMessage = question.trim();
+
+        const userMessage =
+
+            question.trim();
+
 
         setMessages(prev => [
 
@@ -53,41 +97,74 @@ function AIPanel({
 
         ]);
 
+
         setQuestion("");
+
 
         setLoading(true);
 
+
         try {
 
-            const response = await fetch("http://localhost:5001/ai", {
 
-                method: "POST",
+            const response =
 
-                headers: {
+                await fetch(
 
-                    "Content-Type": "application/json"
+                    "http://localhost:5001/ai",
 
-                },
+                    {
 
-                body: JSON.stringify({
+                        method: "POST",
 
-                    workbook,
+                        headers: {
 
-                    question: userMessage
+                            "Content-Type":
 
-                })
+                                "application/json"
 
-            });
+                        },
 
-            const result = await response.json();
+                        body: JSON.stringify({
 
-            console.log(result);
+                            workbook,
 
-            //---------------------------------------
-            // Apply AI result to spreadsheet
-            //---------------------------------------
+                            question:
 
-            if (result.result) {
+                                userMessage
+
+                        })
+
+                    }
+
+                );
+
+
+            const result =
+
+                await response.json();
+
+
+            console.log(
+
+                "AI RESULT:",
+
+                result
+
+            );
+
+
+            //--------------------------------
+            // Apply AI result
+            //--------------------------------
+
+
+            if (
+
+                result.result
+
+            ) {
+
 
                 applyAIResult(
 
@@ -97,21 +174,48 @@ function AIPanel({
 
                 );
 
+
+                //--------------------------------
+                // Show Clear Filter button
+                //--------------------------------
+
+
+                if (
+
+                    result.result.type ===
+
+                    "table"
+
+                ) {
+
+                    setIsFiltered(
+
+                        true
+
+                    );
+
+                }
+
             }
 
-            //---------------------------------------
-            // Update workbook if backend returned one
-            //---------------------------------------
+
+            //--------------------------------
+            // Update workbook
+            //--------------------------------
+
 
             if (
 
-                result.result?.type === "workbook" &&
+                result.result?.type ===
+
+                    "workbook" &&
 
                 result.result.workbook &&
 
                 onWorkbookUpdate
 
             ) {
+
 
                 onWorkbookUpdate(
 
@@ -121,23 +225,44 @@ function AIPanel({
 
             }
 
-            //---------------------------------------
-            // Display AI response
-            //---------------------------------------
 
-            let reply = "Done.";
+            //--------------------------------
+            // Build reply
+            //--------------------------------
 
-            if (result.result?.message) {
 
-                reply = result.result.message;
+            let reply =
+
+                "Done.";
+
+
+            if (
+
+                result.result?.message
+
+            ) {
+
+
+                reply =
+
+                    result.result.message;
 
             }
 
-            else if (result.message) {
 
-                reply = result.message;
+            else if (
+
+                result.message
+
+            ) {
+
+
+                reply =
+
+                    result.message;
 
             }
+
 
             setMessages(prev => [
 
@@ -145,9 +270,19 @@ function AIPanel({
 
                 {
 
-                    role: "assistant",
+                    role:
 
-                    text: reply
+                        "assistant",
+
+                    text:
+
+                        reply,
+
+                    showClearFilter:
+
+                        result.result?.type ===
+
+                        "table"
 
                 }
 
@@ -155,7 +290,18 @@ function AIPanel({
 
         }
 
-        catch {
+
+        catch (error) {
+
+
+            console.error(
+
+                "AI request failed:",
+
+                error
+
+            );
+
 
             setMessages(prev => [
 
@@ -163,15 +309,20 @@ function AIPanel({
 
                 {
 
-                    role: "assistant",
+                    role:
 
-                    text: "Something went wrong."
+                        "assistant",
+
+                    text:
+
+                        "Something went wrong."
 
                 }
 
             ]);
 
         }
+
 
         finally {
 
@@ -181,132 +332,381 @@ function AIPanel({
 
     }
 
+
+    function clearFilter() {
+
+
+        if (
+
+            onRestoreOriginal
+
+        ) {
+
+
+            onRestoreOriginal();
+
+        }
+
+
+        setIsFiltered(
+
+            false
+
+        );
+
+    }
+
+
     return (
 
+
         <div
+
             style={{
+
                 width: 290,
+
                 minWidth: 290,
+
                 maxWidth: 290,
+
                 display: "flex",
+
                 flexDirection: "column",
+
                 height: "100%",
+
                 minHeight: 0,
+
                 overflow: "hidden",
-                borderLeft: "1px solid #ddd",
-                background: "#fafafa"
+
+                borderLeft:
+
+                    "1px solid #ddd",
+
+                background:
+
+                    "#fafafa"
+
             }}
+
         >
 
+
             <div
+
                 style={{
+
                     padding: "18px",
+
                     fontWeight: 700,
+
                     fontSize: 22,
-                    borderBottom: "1px solid #ddd",
-                    background: "#fff",
+
+                    borderBottom:
+
+                        "1px solid #ddd",
+
+                    background:
+
+                        "#fff",
+
                     flexShrink: 0
+
                 }}
+
             >
 
                 InsightFlow Assistant
 
             </div>
 
+
             <div
+
                 style={{
+
                     flex: 1,
+
                     minHeight: 0,
+
                     overflowY: "auto",
+
                     overflowX: "hidden",
+
                     padding: 15,
+
                     display: "flex",
+
                     flexDirection: "column",
+
                     gap: 14
+
                 }}
+
             >
+
 
                 {
 
-                    messages.map((message, index) => (
 
-                        <div
-                            key={index}
-                            style={{
-                                display: "flex",
-                                justifyContent:
-                                    message.role === "user"
-                                        ? "flex-end"
-                                        : "flex-start"
-                            }}
-                        >
+                    messages.map(
+
+                        (
+
+                            message,
+
+                            index
+
+                        ) => (
+
 
                             <div
+
+                                key={
+
+                                    index
+
+                                }
+
                                 style={{
-                                    background:
-                                        message.role === "user"
-                                            ? "#2563eb"
-                                            : "#ffffff",
 
-                                    color:
-                                        message.role === "user"
-                                            ? "#fff"
-                                            : "#222",
+                                    display:
 
-                                    padding: "11px 14px",
+                                        "flex",
 
-                                    borderRadius: 14,
+                                    justifyContent:
 
-                                    maxWidth: "85%",
+                                        message.role ===
 
-                                    whiteSpace: "pre-wrap",
+                                        "user"
 
-                                    wordBreak: "break-word",
+                                            ? "flex-end"
 
-                                    overflowWrap: "break-word",
+                                            : "flex-start"
 
-                                    boxSizing: "border-box",
-
-                                    boxShadow:
-                                        message.role === "assistant"
-                                            ? "0 2px 6px rgba(0,0,0,.08)"
-                                            : "none"
                                 }}
+
                             >
 
-                                {message.text}
+
+                                <div
+
+                                    style={{
+
+                                        display:
+
+                                            "flex",
+
+                                        flexDirection:
+
+                                            "column",
+
+                                        alignItems:
+
+                                            "flex-start",
+
+                                        gap: 8,
+
+                                        background:
+
+                                            message.role ===
+
+                                            "user"
+
+                                                ? "#2563eb"
+
+                                                : "#ffffff",
+
+                                        color:
+
+                                            message.role ===
+
+                                            "user"
+
+                                                ? "#fff"
+
+                                                : "#222",
+
+                                        padding:
+
+                                            "11px 14px",
+
+                                        borderRadius:
+
+                                            14,
+
+                                        maxWidth:
+
+                                            "85%",
+
+                                        whiteSpace:
+
+                                            "pre-wrap",
+
+                                        wordBreak:
+
+                                            "break-word",
+
+                                        overflowWrap:
+
+                                            "break-word",
+
+                                        boxSizing:
+
+                                            "border-box",
+
+                                        boxShadow:
+
+                                            message.role ===
+
+                                            "assistant"
+
+                                                ? "0 2px 6px rgba(0,0,0,.08)"
+
+                                                : "none"
+
+                                    }}
+
+                                >
+
+
+                                    <div>
+
+                                        {
+
+                                            message.text
+
+                                        }
+
+                                    </div>
+
+
+                                    {
+
+
+                                        message.showClearFilter &&
+
+                                        isFiltered && (
+
+                                            <button
+
+                                                onClick={
+
+                                                    clearFilter
+
+                                                }
+
+                                                style={{
+
+                                                    padding:
+
+                                                        "6px 10px",
+
+                                                    border:
+
+                                                        "1px solid #ccc",
+
+                                                    borderRadius:
+
+                                                        6,
+
+                                                    background:
+
+                                                        "#fff",
+
+                                                    color:
+
+                                                        "#333",
+
+                                                    cursor:
+
+                                                        "pointer",
+
+                                                    fontSize:
+
+                                                        12,
+
+                                                    fontWeight:
+
+                                                        600
+
+                                                }}
+
+                                            >
+
+                                                Clear Filter
+
+                                            </button>
+
+                                        )
+
+                                    }
+
+
+                                </div>
+
 
                             </div>
 
-                        </div>
+                        )
 
-                    ))
+                    )
 
                 }
 
+
                 {
+
 
                     loading && (
 
+
                         <div
+
                             style={{
-                                display: "flex",
-                                justifyContent: "flex-start"
+
+                                display:
+
+                                    "flex",
+
+                                justifyContent:
+
+                                    "flex-start"
+
                             }}
+
                         >
 
+
                             <div
+
                                 style={{
-                                    background: "#fff",
-                                    padding: "10px 14px",
-                                    borderRadius: 14,
-                                    boxShadow: "0 2px 6px rgba(0,0,0,.08)"
+
+                                    background:
+
+                                        "#fff",
+
+                                    padding:
+
+                                        "10px 14px",
+
+                                    borderRadius:
+
+                                        14,
+
+                                    boxShadow:
+
+                                        "0 2px 6px rgba(0,0,0,.08)"
+
                                 }}
+
                             >
 
                                 Thinking...
 
                             </div>
+
 
                         </div>
 
@@ -314,80 +714,171 @@ function AIPanel({
 
                 }
 
-                <div ref={messagesEndRef} />
+
+                <div
+
+                    ref={
+
+                        messagesEndRef
+
+                    }
+
+                />
+
 
             </div>
 
+
             <div
+
                 style={{
-                    display: "flex",
+
+                    display:
+
+                        "flex",
+
                     gap: 10,
+
                     padding: 15,
-                    borderTop: "1px solid #ddd",
-                    background: "#fff",
+
+                    borderTop:
+
+                        "1px solid #ddd",
+
+                    background:
+
+                        "#fff",
+
                     flexShrink: 0
+
                 }}
+
             >
+
 
                 <input
 
-                    value={question}
+                    value={
 
-                    onChange={(e) => setQuestion(e.target.value)}
+                        question
 
-                    onKeyDown={(e) => {
+                    }
 
-                        if (e.key === "Enter" && !e.shiftKey) {
+                    onChange={
 
-                            e.preventDefault();
+                        (e) =>
 
-                            askAI();
+                            setQuestion(
+
+                                e.target.value
+
+                            )
+
+                    }
+
+                    onKeyDown={
+
+                        (e) => {
+
+
+                            if (
+
+                                e.key ===
+
+                                    "Enter" &&
+
+                                !e.shiftKey
+
+                            ) {
+
+
+                                e.preventDefault();
+
+
+                                askAI();
+
+                            }
 
                         }
 
-                    }}
+                    }
 
-                    placeholder="Ask about your spreadsheet..."
+                    placeholder=
+
+                        "Ask about your spreadsheet..."
 
                     style={{
 
                         flex: 1,
 
-                        padding: "10px 12px",
+                        padding:
 
-                        border: "1px solid #ccc",
+                            "10px 12px",
 
-                        borderRadius: 8,
+                        border:
 
-                        outline: "none",
+                            "1px solid #ccc",
 
-                        fontSize: 14
+                        borderRadius:
+
+                            8,
+
+                        outline:
+
+                            "none",
+
+                        fontSize:
+
+                            14
 
                     }}
 
                 />
 
+
                 <button
 
-                    onClick={askAI}
+                    onClick={
 
-                    disabled={loading}
+                        askAI
+
+                    }
+
+                    disabled={
+
+                        loading
+
+                    }
 
                     style={{
 
-                        padding: "10px 16px",
+                        padding:
 
-                        border: "none",
+                            "10px 16px",
 
-                        borderRadius: 8,
+                        border:
 
-                        background: "#2563eb",
+                            "none",
 
-                        color: "#fff",
+                        borderRadius:
 
-                        cursor: "pointer",
+                            8,
 
-                        fontWeight: 600
+                        background:
+
+                            "#2563eb",
+
+                        color:
+
+                            "#fff",
+
+                        cursor:
+
+                            "pointer",
+
+                        fontWeight:
+
+                            600
 
                     }}
 
@@ -397,12 +888,15 @@ function AIPanel({
 
                 </button>
 
+
             </div>
+
 
         </div>
 
     );
 
 }
+
 
 export default AIPanel;

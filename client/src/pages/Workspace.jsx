@@ -17,27 +17,48 @@ function Workspace() {
 
     const univerRef = useRef(null);
 
-    const [importedWorkbook, setImportedWorkbook] = useState(null);
-    const [loadingWorkbook, setLoadingWorkbook] = useState(true);
-    const [saving, setSaving] = useState(false);
+    const [originalWorkbook, setOriginalWorkbook] =
+        useState(null);
 
-    const [showCleanPreview, setShowCleanPreview] = useState(false);
+    const [importedWorkbook, setImportedWorkbook] =
+        useState(null);
+
+    const [loadingWorkbook, setLoadingWorkbook] =
+        useState(true);
+
+    const [saving, setSaving] =
+        useState(false);
+
+    const [showCleanPreview, setShowCleanPreview] =
+        useState(false);
 
     const [cleanSummary, setCleanSummary] = useState({
+
         duplicates: 0,
+
         emptyCells: 0,
+
         phoneNumbers: 0,
+
         dates: 0,
+
         trimmed: 0
+
     });
+
 
     function handleSpreadsheetReady(univerAPI) {
 
         univerRef.current = univerAPI;
 
-        console.log("✅ Univer is ready");
+        console.log(
+
+            "✅ Univer is ready"
+
+        );
 
     }
+
 
     useEffect(() => {
 
@@ -45,11 +66,32 @@ function Workspace() {
 
             try {
 
-                const workbook = await getWorkbook(id);
+                const workbook =
+                    await getWorkbook(id);
 
-                if (workbook?.workbook_data) {
 
-                    setImportedWorkbook(workbook.workbook_data);
+                if (
+
+                    workbook?.workbook_data
+
+                ) {
+
+                    const loadedWorkbook =
+                        workbook.workbook_data;
+
+
+                    setOriginalWorkbook(
+
+                        loadedWorkbook
+
+                    );
+
+
+                    setImportedWorkbook(
+
+                        loadedWorkbook
+
+                    );
 
                 }
 
@@ -69,19 +111,29 @@ function Workspace() {
 
         }
 
+
         loadWorkbook();
 
     }, [id]);
+
 
     async function handleSave() {
 
         if (saving) return;
 
+
         try {
 
             setSaving(true);
 
-            await saveCurrentWorkbook(id, univerRef.current);
+
+            await saveCurrentWorkbook(
+
+                id,
+
+                univerRef.current
+
+            );
 
         }
 
@@ -89,7 +141,12 @@ function Workspace() {
 
             console.error(error);
 
-            alert("❌ Failed to save workbook.");
+
+            alert(
+
+                "❌ Failed to save workbook."
+
+            );
 
         }
 
@@ -101,15 +158,38 @@ function Workspace() {
 
     }
 
+
     async function handleImport(file) {
 
         try {
 
-            const result = await uploadExcel(file);
+            const result =
+                await uploadExcel(file);
 
-            setImportedWorkbook(result.workbook);
 
-            alert("Excel imported successfully!");
+            const newWorkbook =
+                result.workbook;
+
+
+            setOriginalWorkbook(
+
+                newWorkbook
+
+            );
+
+
+            setImportedWorkbook(
+
+                newWorkbook
+
+            );
+
+
+            alert(
+
+                "Excel imported successfully!"
+
+            );
 
         }
 
@@ -117,11 +197,17 @@ function Workspace() {
 
             console.error(error);
 
-            alert("Failed to import Excel file.");
+
+            alert(
+
+                "Failed to import Excel file."
+
+            );
 
         }
 
     }
+
 
     async function handleClean() {
 
@@ -129,20 +215,49 @@ function Workspace() {
 
             if (!univerRef.current) return;
 
+
             const workbook =
+
                 univerRef.current
+
                     .getActiveWorkbook()
+
                     .save();
 
-            const result = await cleanWorkbook(workbook);
 
-            setImportedWorkbook(result.workbook);
+            const result =
+
+                await cleanWorkbook(
+
+                    workbook
+
+                );
+
+
+            setOriginalWorkbook(
+
+                result.workbook
+
+            );
+
+
+            setImportedWorkbook(
+
+                result.workbook
+
+            );
+
 
             if (result.summary) {
 
-                setCleanSummary(result.summary);
+                setCleanSummary(
+
+                    result.summary
+
+                );
 
             }
+
 
             setShowCleanPreview(true);
 
@@ -152,11 +267,17 @@ function Workspace() {
 
             console.error(error);
 
-            alert("Cleaning failed.");
+
+            alert(
+
+                "Cleaning failed."
+
+            );
 
         }
 
     }
+
 
     async function applyCleaning() {
 
@@ -164,11 +285,23 @@ function Workspace() {
 
             setShowCleanPreview(false);
 
+
             setTimeout(async () => {
 
-                await saveCurrentWorkbook(id, univerRef.current);
+                await saveCurrentWorkbook(
 
-                alert("✅ Cleaned workbook saved.");
+                    id,
+
+                    univerRef.current
+
+                );
+
+
+                alert(
+
+                    "✅ Cleaned workbook saved."
+
+                );
 
             }, 500);
 
@@ -178,11 +311,31 @@ function Workspace() {
 
             console.error(error);
 
-            alert("Failed to save cleaned workbook.");
+
+            alert(
+
+                "Failed to save cleaned workbook."
+
+            );
 
         }
 
     }
+
+
+    function restoreOriginalWorkbook() {
+
+        if (!originalWorkbook) return;
+
+
+        setImportedWorkbook(
+
+            originalWorkbook
+
+        );
+
+    }
+
 
     if (loadingWorkbook) {
 
@@ -190,13 +343,18 @@ function Workspace() {
 
             <MainLayout>
 
-                <p>Loading workbook...</p>
+                <p>
+
+                    Loading workbook...
+
+                </p>
 
             </MainLayout>
 
         );
 
     }
+
 
     return (
 
@@ -213,37 +371,93 @@ function Workspace() {
             >
 
                 <h1
+
                     style={{
+
                         margin: 0,
+
                         flexShrink: 0
+
                     }}
+
                 >
+
                     Project #{id}
+
                 </h1>
+
 
                 <WorkspaceLayout
 
-                    workbook={importedWorkbook}
+                    workbook={
 
-                    onWorkbookUpdate={setImportedWorkbook}
+                        originalWorkbook
 
-                    onSave={handleSave}
+                    }
 
-                    onImport={handleImport}
+                    onWorkbookUpdate={
 
-                    onClean={handleClean}
+                        setImportedWorkbook
 
-                    saving={saving}
+                    }
+
+                    onSave={
+
+                        handleSave
+
+                    }
+
+                    onImport={
+
+                        handleImport
+
+                    }
+
+                    onClean={
+
+                        handleClean
+
+                    }
+
+                    saving={
+
+                        saving
+
+                    }
+
+                    univerAPI={
+
+                        univerRef.current
+
+                    }
+
+                    onRestoreOriginal={
+
+                        restoreOriginalWorkbook
+
+                    }
 
                 >
 
                     <SpreadsheetView
 
-                        importedWorkbook={importedWorkbook}
+                        importedWorkbook={
 
-                        onReady={handleSpreadsheetReady}
+                            importedWorkbook
 
-                        univerRef={univerRef}
+                        }
+
+                        onReady={
+
+                            handleSpreadsheetReady
+
+                        }
+
+                        univerRef={
+
+                            univerRef
+
+                        }
 
                     />
 
@@ -251,15 +465,36 @@ function Workspace() {
 
             </div>
 
+
             <CleanPreview
 
-                open={showCleanPreview}
+                open={
 
-                summary={cleanSummary}
+                    showCleanPreview
 
-                onApply={applyCleaning}
+                }
 
-                onCancel={() => setShowCleanPreview(false)}
+                summary={
+
+                    cleanSummary
+
+                }
+
+                onApply={
+
+                    applyCleaning
+
+                }
+
+                onCancel={() =>
+
+                    setShowCleanPreview(
+
+                        false
+
+                    )
+
+                }
 
             />
 
@@ -268,5 +503,6 @@ function Workspace() {
     );
 
 }
+
 
 export default Workspace;
