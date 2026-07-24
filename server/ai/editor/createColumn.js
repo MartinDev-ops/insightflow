@@ -1,10 +1,12 @@
-const {
-    inferColumn
-} = require("../inference/inferenceEngine");
+function renameColumn(workbook, aiResponse) {
 
-function createColumn(workbook, aiResponse) {
+    if (
 
-    if (!workbook || !Array.isArray(workbook)) {
+        !workbook ||
+
+        !Array.isArray(workbook)
+
+    ) {
 
         return {
 
@@ -16,9 +18,21 @@ function createColumn(workbook, aiResponse) {
 
     }
 
+
     const targetSheet =
-        workbook.find(sheet => sheet.name === aiResponse.sheet)
-        || workbook[0];
+
+        workbook.find(
+
+            sheet =>
+
+                sheet.name === aiResponse.sheet
+
+        )
+
+        ||
+
+        workbook[0];
+
 
     if (!targetSheet) {
 
@@ -26,43 +40,133 @@ function createColumn(workbook, aiResponse) {
 
             success: false,
 
-            message: "Worksheet not found."
+            message: "Worksheet not found.",
+
+            workbook
 
         };
 
     }
 
-    if (!targetSheet.rows?.length) {
+
+    if (
+
+        !targetSheet.rows ||
+
+        targetSheet.rows.length === 0
+
+    ) {
 
         return {
 
             success: false,
 
-            message: "Worksheet is empty."
+            message: "Worksheet is empty.",
+
+            workbook
 
         };
 
     }
 
-    //--------------------------------------------------
-    // Read existing headers
-    //--------------------------------------------------
+
+    //--------------------------------
+    // Read header row
+    //--------------------------------
 
     const headerCells =
+
         targetSheet.rows[0].cells;
 
-    const headers =
-        headerCells.map(cell =>
-            String(cell.value || "")
+
+    const oldName =
+
+        String(
+
+            aiResponse.oldName ||
+
+            ""
+
+        ).trim();
+
+
+    const newName =
+
+        String(
+
+            aiResponse.newName ||
+
+            ""
+
+        ).trim();
+
+
+    if (!oldName) {
+
+        return {
+
+            success: false,
+
+            message:
+
+                "The original column name is missing.",
+
+            workbook
+
+        };
+
+    }
+
+
+    if (!newName) {
+
+        return {
+
+            success: false,
+
+            message:
+
+                "The new column name is missing.",
+
+            workbook
+
+        };
+
+    }
+
+
+    //--------------------------------
+    // Find original column
+    //--------------------------------
+
+    const columnIndex =
+
+        headerCells.findIndex(
+
+            cell =>
+
+                String(
+
+                    cell?.value ?? ""
+
+                )
+
+                    .trim()
+
+                    .toLowerCase()
+
+                ===
+
+                oldName
+
+                    .toLowerCase()
+
         );
 
-    //--------------------------------------------------
-    // Prevent duplicate columns
-    //--------------------------------------------------
 
     if (
 
-        headers.includes(aiResponse.column)
+        columnIndex === -1
 
     ) {
 
@@ -71,65 +175,78 @@ function createColumn(workbook, aiResponse) {
             success: false,
 
             message:
-                `Column '${aiResponse.column}' already exists.`
+
+                `Column '${oldName}' was not found.`,
+
+            workbook
 
         };
 
     }
 
-    //--------------------------------------------------
-    // Create Header
-    //--------------------------------------------------
 
-    headerCells.push({
+    //--------------------------------
+    // Check duplicate new name
+    //--------------------------------
 
-        value: aiResponse.column
+    const newNameExists =
 
-    });
+        headerCells.some(
 
-    //--------------------------------------------------
-    // Populate every row
-    //--------------------------------------------------
+            (cell, index) =>
 
-    targetSheet.rows
-        .slice(1)
-        .forEach(row => {
+                index !== columnIndex &&
 
-            const rowObject = {};
+                String(
 
-            headers.forEach((header, index) => {
+                    cell?.value ?? ""
 
-                rowObject[header] =
-                    row.cells[index]?.value;
+                )
 
-            });
+                    .trim()
 
-            let value = "";
+                    .toLowerCase()
 
-            //--------------------------------------------------
-            // Calculated Column
-            //--------------------------------------------------
+                ===
 
-            if (aiResponse.sourceColumn) {
+                newName
 
-                value =
-                    inferColumn(
+                    .toLowerCase()
 
-                        aiResponse.column,
+        );
 
-                        rowObject
 
-                    );
+    if (
 
-            }
+        newNameExists
 
-            row.cells.push({
+    ) {
 
-                value
+        return {
 
-            });
+            success: false,
 
-        });
+            message:
+
+                `Column '${newName}' already exists.`,
+
+            workbook
+
+        };
+
+    }
+
+
+    //--------------------------------
+    // Rename column
+    //--------------------------------
+
+    headerCells[
+
+        columnIndex
+
+    ].value = newName;
+
 
     return {
 
@@ -140,10 +257,12 @@ function createColumn(workbook, aiResponse) {
         workbook,
 
         message:
-            `Column '${aiResponse.column}' created successfully.`
+
+            `Column '${oldName}' renamed to '${newName}'.`
 
     };
 
 }
 
-module.exports = createColumn;
+
+module.exports = renameColumn;

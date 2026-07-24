@@ -1,6 +1,12 @@
 function renameColumn(workbook, aiResponse) {
 
-    if (!workbook || !Array.isArray(workbook)) {
+    if (
+
+        !workbook ||
+
+        !Array.isArray(workbook)
+
+    ) {
 
         return {
 
@@ -12,9 +18,21 @@ function renameColumn(workbook, aiResponse) {
 
     }
 
+
     const targetSheet =
-        workbook.find(sheet => sheet.name === aiResponse.sheet)
-        || workbook[0];
+
+        workbook.find(
+
+            sheet =>
+
+                sheet.name === aiResponse.sheet
+
+        )
+
+        ||
+
+        workbook[0];
+
 
     if (!targetSheet) {
 
@@ -22,50 +40,203 @@ function renameColumn(workbook, aiResponse) {
 
             success: false,
 
-            message: "Worksheet not found."
+            message: "Worksheet not found.",
+
+            workbook
 
         };
 
     }
 
-    if (!targetSheet.rows || targetSheet.rows.length === 0) {
+
+    if (
+
+        !targetSheet.rows ||
+
+        targetSheet.rows.length === 0
+
+    ) {
 
         return {
 
             success: false,
 
-            message: "Worksheet is empty."
+            message: "Worksheet is empty.",
+
+            workbook
 
         };
 
     }
 
+
     const headers =
+
         targetSheet.rows[0].cells;
 
-    const index =
-        headers.findIndex(cell =>
 
-            String(cell.value || "").trim() ===
-            aiResponse.oldName
+    const oldName =
 
-        );
+        String(
 
-    if (index === -1) {
+            aiResponse.oldName ||
+
+            ""
+
+        ).trim();
+
+
+    const newName =
+
+        String(
+
+            aiResponse.newName ||
+
+            ""
+
+        ).trim();
+
+
+    if (!oldName) {
 
         return {
 
             success: false,
 
             message:
-                `Column '${aiResponse.oldName}' was not found.`
+
+                "Original column name is missing.",
+
+            workbook
 
         };
 
     }
 
+
+    if (!newName) {
+
+        return {
+
+            success: false,
+
+            message:
+
+                "New column name is missing.",
+
+            workbook
+
+        };
+
+    }
+
+
+    //--------------------------------
+    // Find the original column
+    //--------------------------------
+
+    const index =
+
+        headers.findIndex(
+
+            cell =>
+
+                String(
+
+                    cell?.value ?? ""
+
+                )
+
+                    .trim()
+
+                    .toLowerCase()
+
+                ===
+
+                oldName.toLowerCase()
+
+        );
+
+
+    if (
+
+        index === -1
+
+    ) {
+
+        return {
+
+            success: false,
+
+            message:
+
+                `Column '${oldName}' was not found.`,
+
+            workbook
+
+        };
+
+    }
+
+
+    //--------------------------------
+    // Prevent duplicate column names
+    //--------------------------------
+
+    const duplicateName =
+
+        headers.some(
+
+            (cell, headerIndex) =>
+
+                headerIndex !== index &&
+
+                String(
+
+                    cell?.value ?? ""
+
+                )
+
+                    .trim()
+
+                    .toLowerCase()
+
+                ===
+
+                newName.toLowerCase()
+
+        );
+
+
+    if (
+
+        duplicateName
+
+    ) {
+
+        return {
+
+            success: false,
+
+            message:
+
+                `Column '${newName}' already exists.`,
+
+            workbook
+
+        };
+
+    }
+
+
+    //--------------------------------
+    // Rename the column
+    //--------------------------------
+
     headers[index].value =
-        aiResponse.newName;
+
+        newName;
+
 
     return {
 
@@ -76,10 +247,12 @@ function renameColumn(workbook, aiResponse) {
         workbook,
 
         message:
-            `Column '${aiResponse.oldName}' renamed to '${aiResponse.newName}'.`
+
+            `Column '${oldName}' renamed to '${newName}'.`
 
     };
 
 }
+
 
 module.exports = renameColumn;

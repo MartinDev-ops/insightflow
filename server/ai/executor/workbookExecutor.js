@@ -1,31 +1,162 @@
-const filterExecutor = require("./filterExecutor");
-const sortExecutor = require("./sortExecutor");
-const aggregateExecutor = require("./aggregateExecutor");
-const chartExecutor = require("./chartExecutor");
+const filterExecutor =
+    require("./filterExecutor");
 
-const editExecutor = require("../editor/editExecutor");
+const sortExecutor =
+    require("./sortExecutor");
 
-async function executeIntent(workbook, aiResponse) {
+const aggregateExecutor =
+    require("./aggregateExecutor");
 
-    switch (aiResponse.route) {
+const chartExecutor =
+    require("./chartExecutor");
 
-        case "edit":
+const editExecutor =
+    require("../editor/editExecutor");
 
-            return editExecutor(
 
-                workbook,
+async function executeIntent(
 
-                aiResponse
+    workbook,
 
-            );
+    aiResponse
 
-        default:
+) {
 
-            break;
+    console.log(
+
+        "AI RESPONSE RECEIVED:",
+
+        JSON.stringify(
+
+            aiResponse,
+
+            null,
+
+            2
+
+        )
+
+    );
+
+
+    //--------------------------------
+    // UPDATE / EDIT OPERATIONS
+    //--------------------------------
+
+    if (
+
+        aiResponse.intent === "update"
+
+        ||
+
+        aiResponse.route === "edit"
+
+    ) {
+
+        console.log(
+
+            "✅ EDIT ROUTE DETECTED"
+
+        );
+
+
+        const operation =
+
+            aiResponse.operation
+
+            ||
+
+            aiResponse.action;
+
+
+        console.log(
+
+            "EDIT OPERATION:",
+
+            operation
+
+        );
+
+
+        return editExecutor(
+
+            workbook,
+
+            {
+
+                ...aiResponse,
+
+                operation
+
+            }
+
+        );
 
     }
 
-    switch (aiResponse.intent) {
+
+    //--------------------------------
+    // CLEAN OPERATIONS
+    //--------------------------------
+
+    if (
+
+        aiResponse.intent === "clean"
+
+    ) {
+
+        console.log(
+
+            "✅ CLEAN INTENT DETECTED"
+
+        );
+
+
+        const operation =
+
+            aiResponse.operation
+
+            ||
+
+            aiResponse.action;
+
+
+        console.log(
+
+            "CLEAN OPERATION:",
+
+            operation
+
+        );
+
+
+        return editExecutor(
+
+            workbook,
+
+            {
+
+                ...aiResponse,
+
+                operation
+
+            }
+
+        );
+
+    }
+
+
+    //--------------------------------
+    // NORMAL INTENTS
+    //--------------------------------
+
+    switch (
+
+        aiResponse.intent
+
+    ) {
+
 
         case "filter":
 
@@ -37,6 +168,7 @@ async function executeIntent(workbook, aiResponse) {
 
             );
 
+
         case "sort":
 
             return sortExecutor(
@@ -46,6 +178,7 @@ async function executeIntent(workbook, aiResponse) {
                 aiResponse
 
             );
+
 
         case "aggregate":
 
@@ -57,6 +190,7 @@ async function executeIntent(workbook, aiResponse) {
 
             );
 
+
         case "chart":
 
             return chartExecutor(
@@ -67,15 +201,19 @@ async function executeIntent(workbook, aiResponse) {
 
             );
 
+
         case "general":
 
             return {
 
                 type: "message",
 
-                message: aiResponse.message
+                message:
+
+                    aiResponse.message
 
             };
+
 
         case "unknown":
 
@@ -84,10 +222,15 @@ async function executeIntent(workbook, aiResponse) {
                 type: "message",
 
                 message:
-                    aiResponse.message ||
+
+                    aiResponse.message
+
+                    ||
+
                     "I couldn't understand that request."
 
             };
+
 
         default:
 
@@ -96,6 +239,7 @@ async function executeIntent(workbook, aiResponse) {
                 type: "message",
 
                 message:
+
                     "That operation is not supported yet."
 
             };
@@ -103,5 +247,6 @@ async function executeIntent(workbook, aiResponse) {
     }
 
 }
+
 
 module.exports = executeIntent;

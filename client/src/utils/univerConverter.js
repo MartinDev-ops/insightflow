@@ -1,160 +1,481 @@
 import { LocaleType } from "@univerjs/presets";
 
-export function convertWorkbookToUniver(workbook) {
 
-    const sheets = {};
-    const sheetOrder = [];
+function calculateColumnWidth(
 
-    workbook.forEach((sheet, sheetIndex) => {
+    sheet,
 
-        const sheetId = `sheet-${sheetIndex + 1}`;
+    columnIndex
 
-        sheetOrder.push(sheetId);
+) {
 
-        const cellData = {};
-        const rowData = {};
-        const columnData = {};
+    const MIN_WIDTH = 90;
 
-        // -------------------------
-        // Rows
-        // -------------------------
+    const MAX_WIDTH = 300;
 
-        (sheet.rows || []).forEach((row, rowIndex) => {
+    const CHARACTER_WIDTH = 8;
 
-            cellData[rowIndex] = {};
 
-            rowData[rowIndex] = {
+    let longestTextLength = 0;
 
-                h: row.height || 23
 
-            };
+    //--------------------------------
+    // Check header and all data
+    //--------------------------------
 
-            (row.cells || []).forEach((cell, columnIndex) => {
+    (sheet.rows || []).forEach(row => {
 
-                cellData[rowIndex][columnIndex] = {
 
-                    v: cell?.value ?? ""
+        const cell =
 
-                };
+            row.cells?.[columnIndex];
 
-            });
 
-        });
+        if (
 
-        // -------------------------
-        // Columns
-        // -------------------------
+            cell?.value !== undefined &&
 
-        (sheet.columns || []).forEach((column, columnIndex) => {
+            cell?.value !== null
 
-            columnData[columnIndex] = {
+        ) {
 
-                // Excel-like column width
-                w: Math.max((column.width || 10) * 8, 90)
 
-            };
+            const text =
 
-        });
+                String(cell.value);
 
-        // If no column information exists,
-        // generate default widths.
 
-        if (Object.keys(columnData).length === 0) {
+            longestTextLength =
 
-            const totalColumns = Math.max(sheet.columnCount || 26, 26);
+                Math.max(
 
-            for (let i = 0; i < totalColumns; i++) {
+                    longestTextLength,
 
-                columnData[i] = {
+                    text.length
 
-                    w: 90
-
-                };
-
-            }
+                );
 
         }
 
-        // -------------------------
-        // Merge Data
-        // -------------------------
+    });
 
-        const mergeData = [];
 
-        (sheet.merges || []).forEach((merge) => {
+    //--------------------------------
+    // Calculate width
+    //--------------------------------
 
-            mergeData.push({
+    let width =
 
-                range: merge
+        longestTextLength *
 
-            });
+        CHARACTER_WIDTH;
 
-        });
 
-        // -------------------------
-        // Sheet
-        // -------------------------
+    //--------------------------------
+    // Minimum width
+    //--------------------------------
 
-        sheets[sheetId] = {
+    width = Math.max(
 
-            id: sheetId,
+        width,
 
-            name: sheet.name || `Sheet ${sheetIndex + 1}`,
+        MIN_WIDTH
 
-            rowCount: Math.max(sheet.rowCount || 100, 100),
+    );
 
-            columnCount: Math.max(sheet.columnCount || 26, 26),
 
-            cellData,
+    //--------------------------------
+    // Maximum width
+    //--------------------------------
 
-            rowData,
+    width = Math.min(
 
-            columnData,
+        width,
 
-            mergeData,
+        MAX_WIDTH
 
-            hidden: 0,
+    );
 
-            zoomRatio: 1,
 
-            scrollTop: 0,
+    return width;
 
-            scrollLeft: 0,
+}
 
-            // Excel default-ish width
-            defaultColumnWidth: 90,
 
-            defaultRowHeight: 23,
+export function convertWorkbookToUniver(
 
-            freeze: {
+    workbook
 
-                startRow: -1,
+) {
 
-                startColumn: -1,
 
-                xSplit: 0,
+    const sheets = {};
 
-                ySplit: 0
+    const sheetOrder = [];
+
+
+    workbook.forEach(
+
+        (
+
+            sheet,
+
+            sheetIndex
+
+        ) => {
+
+
+            const sheetId =
+
+                `sheet-${sheetIndex + 1}`;
+
+
+            sheetOrder.push(
+
+                sheetId
+
+            );
+
+
+            const cellData = {};
+
+            const rowData = {};
+
+            const columnData = {};
+
+
+            //--------------------------------
+            // Rows
+            //--------------------------------
+
+            (
+
+                sheet.rows ||
+
+                []
+
+            ).forEach(
+
+                (
+
+                    row,
+
+                    rowIndex
+
+                ) => {
+
+
+                    cellData[rowIndex] = {};
+
+
+                    rowData[rowIndex] = {
+
+
+                        h:
+
+                            row.height ||
+
+                            23
+
+
+                    };
+
+
+                    (
+
+                        row.cells ||
+
+                        []
+
+                    ).forEach(
+
+                        (
+
+                            cell,
+
+                            columnIndex
+
+                        ) => {
+
+
+                            cellData[
+
+                                rowIndex
+
+                            ][
+
+                                columnIndex
+
+                            ] = {
+
+
+                                v:
+
+                                    cell?.value ??
+
+                                    ""
+
+                            };
+
+                        }
+
+                    );
+
+                }
+
+            );
+
+
+            //--------------------------------
+            // Columns
+            //--------------------------------
+
+            const totalColumns =
+
+                Math.max(
+
+                    sheet.columnCount ||
+
+                    0,
+
+                    sheet.columns?.length ||
+
+                    0,
+
+                    26
+
+                );
+
+
+            for (
+
+                let columnIndex = 0;
+
+                columnIndex < totalColumns;
+
+                columnIndex++
+
+            ) {
+
+
+                const calculatedWidth =
+
+                    calculateColumnWidth(
+
+                        sheet,
+
+                        columnIndex
+
+                    );
+
+
+                const existingWidth =
+
+                    sheet.columns?.[
+
+                        columnIndex
+
+                    ]?.width;
+
+
+                columnData[
+
+                    columnIndex
+
+                ] = {
+
+
+                    w:
+
+                        existingWidth
+
+                            ? Math.max(
+
+                                existingWidth * 8,
+
+                                90
+
+                            )
+
+                            : calculatedWidth
+
+                };
 
             }
 
-        };
 
-    });
+            //--------------------------------
+            // Merge Data
+            //--------------------------------
+
+            const mergeData = [];
+
+
+            (
+
+                sheet.merges ||
+
+                []
+
+            ).forEach(
+
+                merge => {
+
+
+                    mergeData.push({
+
+
+                        range:
+
+                            merge
+
+                    });
+
+                }
+
+            );
+
+
+            //--------------------------------
+            // Sheet
+            //--------------------------------
+
+            sheets[sheetId] = {
+
+
+                id:
+
+                    sheetId,
+
+
+                name:
+
+                    sheet.name ||
+
+                    `Sheet ${sheetIndex + 1}`,
+
+
+                rowCount:
+
+                    Math.max(
+
+                        sheet.rowCount ||
+
+                        100,
+
+                        100
+
+                    ),
+
+
+                columnCount:
+
+                    totalColumns,
+
+
+                cellData,
+
+
+                rowData,
+
+
+                columnData,
+
+
+                mergeData,
+
+
+                hidden:
+
+                    0,
+
+
+                zoomRatio:
+
+                    1,
+
+
+                scrollTop:
+
+                    0,
+
+
+                scrollLeft:
+
+                    0,
+
+
+                defaultColumnWidth:
+
+                    90,
+
+
+                defaultRowHeight:
+
+                    23,
+
+
+                freeze: {
+
+
+                    startRow:
+
+                        -1,
+
+
+                    startColumn:
+
+                        -1,
+
+
+                    xSplit:
+
+                        0,
+
+
+                    ySplit:
+
+                        0
+
+                }
+
+            };
+
+        }
+
+    );
+
 
     return {
 
-        id: "workbook",
 
-        name: "Workbook",
+        id:
 
-        appVersion: "0.25.1",
+            "workbook",
 
-        locale: LocaleType.EN_US,
 
-        styles: {},
+        name:
+
+            "Workbook",
+
+
+        appVersion:
+
+            "0.25.1",
+
+
+        locale:
+
+            LocaleType.EN_US,
+
+
+        styles:
+
+            {},
+
 
         sheetOrder,
+
 
         sheets
 

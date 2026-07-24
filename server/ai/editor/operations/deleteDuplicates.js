@@ -1,16 +1,44 @@
 function deleteDuplicates(workbook, aiResponse) {
 
+    if (!workbook || !Array.isArray(workbook)) {
+
+        return {
+
+            success: false,
+
+            message: "No workbook loaded.",
+
+            workbook
+
+        };
+
+    }
+
     const {
 
         sheet
 
-    } = aiResponse;
+    } = aiResponse || {};
 
     const targetSheet =
-        workbook.find(s => s.name === sheet)
+
+        workbook.find(
+
+            s => s.name === sheet
+
+        )
+
         || workbook[0];
 
-    if (!targetSheet || !targetSheet.rows?.length) {
+    if (
+
+        !targetSheet ||
+
+        !targetSheet.rows ||
+
+        targetSheet.rows.length === 0
+
+    ) {
 
         return {
 
@@ -25,9 +53,11 @@ function deleteDuplicates(workbook, aiResponse) {
     }
 
     const header =
+
         targetSheet.rows[0];
 
     const rows =
+
         targetSheet.rows.slice(1);
 
     const seen = new Set();
@@ -39,15 +69,30 @@ function deleteDuplicates(workbook, aiResponse) {
     rows.forEach(row => {
 
         const rowKey =
-            row.cells
+
+            (row.cells || [])
+
                 .map(cell =>
-                    String(cell.value ?? "")
+
+                    String(
+
+                        cell?.value ?? ""
+
+                    )
+
                         .trim()
+
                         .toLowerCase()
+
                 )
+
                 .join("|");
 
-        if (seen.has(rowKey)) {
+        if (
+
+            seen.has(rowKey)
+
+        ) {
 
             removed++;
 
@@ -78,7 +123,8 @@ function deleteDuplicates(workbook, aiResponse) {
         type: "workbook",
 
         message:
-            `Removed ${removed} duplicate rows.`,
+
+            `Removed ${removed} duplicate row(s).`,
 
         workbook
 

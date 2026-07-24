@@ -6,7 +6,14 @@ const cleanWorkbook = require("./cleanWorkbook");
 
 async function editorEngine(workbook, aiResponse) {
 
-    switch (aiResponse.intent) {
+    const operation =
+
+        aiResponse.operation ||
+
+        aiResponse.action;
+
+
+    switch (operation) {
 
         case "createColumn":
 
@@ -18,6 +25,7 @@ async function editorEngine(workbook, aiResponse) {
 
             );
 
+
         case "renameColumn":
 
             return renameColumn(
@@ -27,6 +35,7 @@ async function editorEngine(workbook, aiResponse) {
                 aiResponse
 
             );
+
 
         case "deleteColumn":
 
@@ -38,6 +47,7 @@ async function editorEngine(workbook, aiResponse) {
 
             );
 
+
         case "fillMissing":
 
             return fillMissing(
@@ -47,6 +57,7 @@ async function editorEngine(workbook, aiResponse) {
                 aiResponse
 
             );
+
 
         case "clean":
 
@@ -58,6 +69,7 @@ async function editorEngine(workbook, aiResponse) {
 
             );
 
+
         default:
 
             return {
@@ -65,7 +77,8 @@ async function editorEngine(workbook, aiResponse) {
                 success: false,
 
                 message:
-                    "Unknown edit operation."
+
+                    `Unknown edit operation: ${operation}`
 
             };
 
