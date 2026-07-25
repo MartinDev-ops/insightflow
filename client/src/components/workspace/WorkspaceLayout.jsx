@@ -7,6 +7,8 @@ function WorkspaceLayout({
 
     children,
 
+    projectId,
+
     onSave,
 
     onImport,
@@ -19,7 +21,9 @@ function WorkspaceLayout({
 
     onWorkbookUpdate,
 
-    onRestoreOriginal
+    onFilterApplied,
+
+    onClearFilter
 
 }) {
 
@@ -142,6 +146,12 @@ function WorkspaceLayout({
 
                 <AIPanel
 
+                    projectId={
+
+                        projectId
+
+                    }
+
                     workbook={
 
                         workbook
@@ -154,9 +164,15 @@ function WorkspaceLayout({
 
                     }
 
-                    onRestoreOriginal={
+                    onFilterApplied={
 
-                        onRestoreOriginal
+                        onFilterApplied
+
+                    }
+
+                    onClearFilter={
+
+                        onClearFilter
 
                     }
 

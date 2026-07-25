@@ -32,6 +32,9 @@ function Workspace() {
     const [showCleanPreview, setShowCleanPreview] =
         useState(false);
 
+    const [filterResult, setFilterResult] =
+        useState(null);
+
     const [cleanSummary, setCleanSummary] = useState({
 
         duplicates: 0,
@@ -184,6 +187,8 @@ function Workspace() {
 
             );
 
+            setFilterResult(null);
+
 
             alert(
 
@@ -246,6 +251,8 @@ function Workspace() {
                 result.workbook
 
             );
+
+            setFilterResult(null);
 
 
             if (result.summary) {
@@ -323,16 +330,9 @@ function Workspace() {
     }
 
 
-    function restoreOriginalWorkbook() {
+    function clearFilter() {
 
-        if (!originalWorkbook) return;
-
-
-        setImportedWorkbook(
-
-            originalWorkbook
-
-        );
+        setFilterResult(null);
 
     }
 
@@ -389,6 +389,12 @@ function Workspace() {
 
                 <WorkspaceLayout
 
+                    projectId={
+
+                        id
+
+                    }
+
                     workbook={
 
                         originalWorkbook
@@ -398,6 +404,12 @@ function Workspace() {
                     onWorkbookUpdate={
 
                         setImportedWorkbook
+
+                    }
+
+                    onFilterApplied={
+
+                        setFilterResult
 
                     }
 
@@ -431,15 +443,21 @@ function Workspace() {
 
                     }
 
-                    onRestoreOriginal={
+                    onClearFilter={
 
-                        restoreOriginalWorkbook
+                        clearFilter
 
                     }
 
                 >
 
                     <SpreadsheetView
+
+                        filterResult={
+
+                            filterResult
+
+                        }
 
                         importedWorkbook={
 

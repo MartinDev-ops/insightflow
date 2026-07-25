@@ -32,6 +32,36 @@ const {
     classifyQuestion
 } = require("../ai/planner/planner");
 
+const pool = require("../config/db");
+
+const {
+    normalizeWorkbook
+} = require("../ai/workbook/normalizeWorkbook");
+
+
+async function getSavedWorkbook(projectId) {
+
+    if (!projectId) {
+
+        return null;
+
+    }
+
+    const result = await pool.query(
+
+        `
+        SELECT workbook_data
+        FROM workbooks
+        WHERE project_id = $1
+        `,
+        [projectId]
+
+    );
+
+    return result.rows[0]?.workbook_data || null;
+
+}
+
 
 async function askAI(req, res) {
 
@@ -41,9 +71,32 @@ async function askAI(req, res) {
 
             workbook,
 
+            projectId,
+
             question
 
         } = req.body;
+
+
+        // A live workbook lets the assistant read an import before it is
+        // saved. If none was sent, recover the saved workbook for this project.
+        const sourceWorkbook =
+
+            workbook
+
+            ||
+
+            await getSavedWorkbook(projectId);
+
+        // Preserve the original import format exactly. Only saved Univer
+        // snapshots need conversion before they reach the existing AI engine.
+        const aiWorkbook =
+
+            Array.isArray(sourceWorkbook)
+
+                ? sourceWorkbook
+
+                : normalizeWorkbook(sourceWorkbook);
 
 
         //---------------------------------
@@ -75,7 +128,7 @@ async function askAI(req, res) {
 
                 : buildWorkbookContext(
 
-                    workbook
+                    aiWorkbook
 
                 );
 
@@ -131,7 +184,7 @@ async function askAI(req, res) {
         const resolvedResponse =
             resolveColumns(
 
-                workbook,
+                aiWorkbook,
 
                 aiResponse
 
@@ -171,7 +224,7 @@ async function askAI(req, res) {
         const result =
             await executeIntent(
 
-                workbook,
+                aiWorkbook,
 
                 resolvedResponse
 

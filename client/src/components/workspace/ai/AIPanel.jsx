@@ -5,11 +5,15 @@ import applyAIResult from "../../../ai/applyAIResult";
 
 function AIPanel({
 
+    projectId,
+
     workbook,
 
     onWorkbookUpdate,
 
-    onRestoreOriginal
+    onFilterApplied,
+
+    onClearFilter
 
 }) {
 
@@ -49,6 +53,29 @@ function AIPanel({
     const messagesEndRef =
 
         useRef(null);
+
+
+    useEffect(() => {
+
+        setQuestion("");
+
+        setIsFiltered(false);
+
+        setMessages([
+
+            {
+
+                role: "assistant",
+
+                text:
+
+                    "Hi 👋 I'm the InsightFlow Assistant.\n\nAsk me anything about your spreadsheet."
+
+            }
+
+        ]);
+
+    }, [projectId]);
 
 
     useEffect(() => {
@@ -127,6 +154,10 @@ function AIPanel({
 
                         body: JSON.stringify({
 
+                            projectId,
+
+                            // An import is held here until the user saves it.
+                            // A reopened project supplies its saved workbook.
                             workbook,
 
                             question:
@@ -166,13 +197,33 @@ function AIPanel({
             ) {
 
 
-                applyAIResult(
+                if (
 
-                    window.univerAPI,
+                    result.result.type ===
 
-                    result.result
+                    "table"
 
-                );
+                ) {
+
+                    onFilterApplied?.(
+
+                        result.result
+
+                    );
+
+                }
+
+                else {
+
+                    applyAIResult(
+
+                        window.univerAPI,
+
+                        result.result
+
+                    );
+
+                }
 
 
                 //--------------------------------
@@ -336,16 +387,7 @@ function AIPanel({
     function clearFilter() {
 
 
-        if (
-
-            onRestoreOriginal
-
-        ) {
-
-
-            onRestoreOriginal();
-
-        }
+        onClearFilter?.();
 
 
         setIsFiltered(

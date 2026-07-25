@@ -135,7 +135,7 @@ function filterExecutor(workbook, aiResponse) {
 
         message:
 
-            `Found ${matchedRows.length} matching row${
+            `Filter applied — ${matchedRows.length} matching row${
 
                 matchedRows.length === 1
 
@@ -143,7 +143,7 @@ function filterExecutor(workbook, aiResponse) {
 
                     : "s"
 
-            }.`,
+            } found.`,
 
 
         headers,

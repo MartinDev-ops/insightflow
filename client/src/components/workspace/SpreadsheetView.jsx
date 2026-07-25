@@ -7,11 +7,14 @@ import UniverPresetSheetsCoreEnUS from "@univerjs/preset-sheets-core/locales/en-
 
 import { importExcelToUniver } from "../../import/ExcelImporter";
 
+import FilteredTableView from "./FilteredTableView";
+
 import "@univerjs/preset-sheets-core/lib/index.css";
 
 function SpreadsheetView({
     onReady,
     importedWorkbook,
+    filterResult,
     onWorkbookChange,
     univerRef
 }) {
@@ -153,8 +156,8 @@ function SpreadsheetView({
     return (
 
         <div
-            ref={containerRef}
             style={{
+                position: "relative",
                 flex: 1,
                 width: "100%",
                 height: "100%",
@@ -164,7 +167,29 @@ function SpreadsheetView({
                 borderRadius: 8,
                 overflow: "hidden"
             }}
-        />
+        >
+            <div
+                ref={containerRef}
+                style={{
+                    width: "100%",
+                    height: "100%",
+                    visibility: filterResult ? "hidden" : "visible"
+                }}
+            />
+
+            {filterResult && (
+                <div
+                    style={{
+                        position: "absolute",
+                        inset: 0,
+                        display: "flex",
+                        background: "#fff"
+                    }}
+                >
+                    <FilteredTableView result={filterResult} />
+                </div>
+            )}
+        </div>
 
     );
 
