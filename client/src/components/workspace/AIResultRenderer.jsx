@@ -1,3 +1,5 @@
+import { displayCellValue } from "../../utils/cellDisplay";
+
 function AIResultRenderer({ result }) {
 
     if (!result) return null;
@@ -83,7 +85,7 @@ function AIResultRenderer({ result }) {
                                             background: "#f6f6f6"
                                         }}
                                     >
-                                        {header}
+                                        {displayCellValue(header)}
                                     </th>
 
                                 ))}
@@ -107,7 +109,7 @@ function AIResultRenderer({ result }) {
                                                 borderBottom: "1px solid #eee"
                                             }}
                                         >
-                                            {cell.value}
+                                            {displayCellValue(cell)}
                                         </td>
 
                                     ))}

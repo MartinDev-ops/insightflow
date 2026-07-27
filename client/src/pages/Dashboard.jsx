@@ -65,7 +65,17 @@ function Dashboard() {
 
             ) : (
 
-                <RecentProjects projects={projects} />
+                <RecentProjects
+                    projects={projects}
+                    onProjectRenamed={(updatedProject) =>
+                        setProjects((items) => items.map((project) =>
+                            project.id === updatedProject.id ? updatedProject : project
+                        ))
+                    }
+                    onProjectDeleted={(projectId) =>
+                        setProjects((items) => items.filter((project) => project.id !== projectId))
+                    }
+                />
 
             )}
 

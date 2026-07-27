@@ -9,6 +9,8 @@ function AIPanel({
 
     workbook,
 
+    getLiveWorkbook,
+
     onWorkbookUpdate,
 
     onFilterApplied,
@@ -133,6 +135,10 @@ function AIPanel({
 
         try {
 
+            // Take a fresh snapshot at send time. This covers an edit that has
+            // not yet been committed to React state.
+            const liveWorkbook = getLiveWorkbook?.() || workbook;
+
 
             const response =
 
@@ -156,9 +162,8 @@ function AIPanel({
 
                             projectId,
 
-                            // An import is held here until the user saves it.
-                            // A reopened project supplies its saved workbook.
-                            workbook,
+                            // Includes direct, unsaved edits made in Univer.
+                            workbook: liveWorkbook,
 
                             question:
 

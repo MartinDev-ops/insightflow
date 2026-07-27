@@ -19,6 +19,8 @@ function WorkspaceLayout({
 
     workbook,
 
+    getLiveWorkbook,
+
     onWorkbookUpdate,
 
     onFilterApplied,
@@ -155,6 +157,12 @@ function WorkspaceLayout({
                     workbook={
 
                         workbook
+
+                    }
+
+                    getLiveWorkbook={
+
+                        getLiveWorkbook
 
                     }
 

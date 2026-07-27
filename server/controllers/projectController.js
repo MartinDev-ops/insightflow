@@ -146,8 +146,58 @@ const getProjectById = async (req, res) => {
 
 };
 
+const renameProject = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const name = req.body.name?.trim();
+
+        if (!name) return res.status(400).json({ message: "Project name is required." });
+
+        const result = await pool.query(
+            "UPDATE projects SET name = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *;",
+            [name, id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "Project not found." });
+        }
+
+        res.status(200).json(result.rows[0]);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Failed to rename project." });
+    }
+};
+
+const deleteProject = async (req, res) => {
+    const client = await pool.connect();
+
+    try {
+        const { id } = req.params;
+        await client.query("BEGIN");
+        await client.query("DELETE FROM workbooks WHERE project_id = $1;", [id]);
+        const result = await client.query("DELETE FROM projects WHERE id = $1 RETURNING id;", [id]);
+
+        if (result.rows.length === 0) {
+            await client.query("ROLLBACK");
+            return res.status(404).json({ message: "Project not found." });
+        }
+
+        await client.query("COMMIT");
+        res.status(204).send();
+    } catch (error) {
+        await client.query("ROLLBACK");
+        console.error(error);
+        res.status(500).json({ message: "Failed to delete project." });
+    } finally {
+        client.release();
+    }
+};
+
 module.exports = {
     createProject,
     getProjects,
-    getProjectById
+    getProjectById,
+    renameProject,
+    deleteProject
 };

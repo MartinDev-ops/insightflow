@@ -1,3 +1,5 @@
+import { displayCellValue } from "../../utils/cellDisplay";
+
 function FilteredTableView({ result }) {
 
     const headers = result?.headers || [];
@@ -37,7 +39,7 @@ function FilteredTableView({ result }) {
                                     fontWeight: 700
                                 }}
                             >
-                                {header}
+                                {displayCellValue(header)}
                             </th>
                         ))}
                     </tr>
@@ -53,7 +55,7 @@ function FilteredTableView({ result }) {
                                         border: "1px solid #e2e5e9"
                                     }}
                                 >
-                                    {row.cells?.[columnIndex]?.value ?? ""}
+                                    {displayCellValue(row.cells?.[columnIndex])}
                                 </td>
                             ))}
                         </tr>

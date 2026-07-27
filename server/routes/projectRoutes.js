@@ -5,11 +5,15 @@ const router = express.Router();
 const {
     createProject,
     getProjects,
-    getProjectById
+    getProjectById,
+    renameProject,
+    deleteProject
 } = require("../controllers/projectController");
 
 router.post("/", createProject);
 router.get("/", getProjects);
 router.get("/:id", getProjectById);
+router.patch("/:id", renameProject);
+router.delete("/:id", deleteProject);
 
 module.exports = router;

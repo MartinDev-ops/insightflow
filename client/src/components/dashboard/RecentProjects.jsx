@@ -1,6 +1,6 @@
 import ProjectCard from "./ProjectCard";
 
-function RecentProjects({ projects = [] }) {
+function RecentProjects({ projects = [], onProjectRenamed, onProjectDeleted }) {
 
     return (
 
@@ -23,6 +23,8 @@ function RecentProjects({ projects = [] }) {
                         <ProjectCard
                             key={project.id}
                             project={project}
+                            onProjectRenamed={onProjectRenamed}
+                            onProjectDeleted={onProjectDeleted}
                         />
 
                     ))}

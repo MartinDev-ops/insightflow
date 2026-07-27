@@ -64,17 +64,15 @@ function SpreadsheetView({
 
         univerAPI.createWorkbook({});
 
-        const workbook = univerAPI.getActiveWorkbook();
+        // This is attached to Univer rather than the initial blank workbook, so
+        // it also observes edits after a loaded workbook replaces that workbook.
+        const workbookChangeSubscription = univerAPI.onCommandExecuted(() => {
+            const snapshot = univerAPI.getActiveWorkbook()?.save?.();
 
-        if (workbook && onWorkbookChange) {
-
-            workbook.onCommandExecuted(() => {
-
-                onWorkbookChange();
-
-            });
-
-        }
+            if (snapshot && onWorkbookChange) {
+                onWorkbookChange(snapshot);
+            }
+        });
 
         if (onReady) {
 
@@ -99,6 +97,8 @@ function SpreadsheetView({
         return () => {
 
             resizeObserver.disconnect();
+
+            workbookChangeSubscription?.dispose?.();
 
             univerAPI.dispose();
 

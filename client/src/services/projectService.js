@@ -26,6 +26,27 @@ export async function getProjects() {
 
 }
 
+export async function getProject(projectId) {
+    const response = await fetch(`${API_URL}/${projectId}`);
+    if (!response.ok) throw new Error("Failed to load project.");
+    return await response.json();
+}
+
+export async function renameProject(projectId, name) {
+    const response = await fetch(`${API_URL}/${projectId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name })
+    });
+    if (!response.ok) throw new Error("Failed to rename project.");
+    return await response.json();
+}
+
+export async function deleteProject(projectId) {
+    const response = await fetch(`${API_URL}/${projectId}`, { method: "DELETE" });
+    if (!response.ok) throw new Error("Failed to delete project.");
+}
+
 export async function createProject(project) {
 
     try {

@@ -6,6 +6,7 @@ import {
 
 import Dashboard from "./pages/Dashboard";
 import Workspace from "./pages/Workspace";
+import ProjectAnalytics from "./pages/ProjectAnalytics";
 
 function App() {
 
@@ -23,6 +24,11 @@ function App() {
                 <Route
                     path="/projects/:id"
                     element={<Workspace />}
+                />
+
+                <Route
+                    path="/projects/:id/analytics"
+                    element={<ProjectAnalytics />}
                 />
 
             </Routes>

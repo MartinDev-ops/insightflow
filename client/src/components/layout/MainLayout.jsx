@@ -1,6 +1,6 @@
 import Header from "./Header";
 
-function MainLayout({ children }) {
+function MainLayout({ children, variant = "default" }) {
 
     return (
 
@@ -9,7 +9,7 @@ function MainLayout({ children }) {
                 height: "100vh",
                 display: "flex",
                 flexDirection: "column",
-                background: "#F6F3EE",
+                background: variant === "analytics" ? "#F8FAFC" : "#F6F3EE",
                 overflow: "hidden"
             }}
         >

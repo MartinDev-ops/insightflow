@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 import MainLayout from "../components/layout/MainLayout";
 import WorkspaceLayout from "../components/workspace/WorkspaceLayout";
@@ -10,6 +10,7 @@ import { saveCurrentWorkbook } from "../utils/saveWorkbook";
 import { uploadExcel } from "../services/uploadService";
 import { getWorkbook } from "../services/workbookService";
 import { cleanWorkbook } from "../services/cleanService";
+import { getActiveWorkbookSnapshot } from "../utils/getActiveWorkbookSnapshot";
 
 function Workspace() {
 
@@ -18,6 +19,9 @@ function Workspace() {
     const univerRef = useRef(null);
 
     const [originalWorkbook, setOriginalWorkbook] =
+        useState(null);
+
+    const [currentWorkbook, setCurrentWorkbook] =
         useState(null);
 
     const [importedWorkbook, setImportedWorkbook] =
@@ -63,6 +67,29 @@ function Workspace() {
     }
 
 
+    function handleWorkbookChange(workbookSnapshot) {
+
+        setCurrentWorkbook(workbookSnapshot);
+
+    }
+
+
+    function getLiveWorkbook() {
+
+        return getActiveWorkbookSnapshot(univerRef.current)
+            || currentWorkbook;
+
+    }
+
+
+    function handleWorkbookUpdate(workbook) {
+
+        setCurrentWorkbook(workbook);
+        setImportedWorkbook(workbook);
+
+    }
+
+
     useEffect(() => {
 
         async function loadWorkbook() {
@@ -89,6 +116,8 @@ function Workspace() {
 
                     );
 
+
+                    setCurrentWorkbook(loadedWorkbook);
 
                     setImportedWorkbook(
 
@@ -181,6 +210,8 @@ function Workspace() {
             );
 
 
+            setCurrentWorkbook(newWorkbook);
+
             setImportedWorkbook(
 
                 newWorkbook
@@ -245,6 +276,8 @@ function Workspace() {
 
             );
 
+
+            setCurrentWorkbook(result.workbook);
 
             setImportedWorkbook(
 
@@ -370,21 +403,36 @@ function Workspace() {
                 }}
             >
 
-                <h1
-
+                <div
                     style={{
-
-                        margin: 0,
-
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 16,
                         flexShrink: 0
-
                     }}
-
                 >
+                    <h1 style={{ margin: 0 }}>Project #{id}</h1>
 
-                    Project #{id}
-
-                </h1>
+                    <Link
+                        to={`/projects/${id}/analytics`}
+                        style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 8,
+                            padding: "9px 12px",
+                            border: "1px solid #D6D0C6",
+                            borderRadius: 7,
+                            background: "#FFFFFF",
+                            color: "#1F2937",
+                            fontSize: 14,
+                            fontWeight: 600,
+                            whiteSpace: "nowrap"
+                        }}
+                    >
+                        View dashboard <span aria-hidden="true">→</span>
+                    </Link>
+                </div>
 
 
                 <WorkspaceLayout
@@ -397,13 +445,19 @@ function Workspace() {
 
                     workbook={
 
-                        originalWorkbook
+                        currentWorkbook
+
+                    }
+
+                    getLiveWorkbook={
+
+                        getLiveWorkbook
 
                     }
 
                     onWorkbookUpdate={
 
-                        setImportedWorkbook
+                        handleWorkbookUpdate
 
                     }
 
@@ -462,6 +516,12 @@ function Workspace() {
                         importedWorkbook={
 
                             importedWorkbook
+
+                        }
+
+                        onWorkbookChange={
+
+                            handleWorkbookChange
 
                         }
 
