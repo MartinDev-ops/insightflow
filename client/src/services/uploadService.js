@@ -1,4 +1,6 @@
-const API_URL = "http://localhost:5001/upload";
+import API_BASE_URL from "./config";
+
+const API_URL = `${API_BASE_URL}/upload`;
 
 export async function uploadExcel(file) {
 

@@ -1,4 +1,6 @@
-const API_URL = "http://localhost:5001/clean";
+import API_BASE_URL from "./config";
+
+const API_URL = `${API_BASE_URL}/clean`;
 
 export async function cleanWorkbook(workbook) {
 
