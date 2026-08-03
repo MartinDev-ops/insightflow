@@ -118,7 +118,7 @@ app.post("/upload", upload.array("files"), async (req, res) => {
 
         dataset = workbookData;
 
-        console.log("✅ Workbook imported with ExcelJS");
+        console.log("\u2705 Workbook imported with ExcelJS");
 
         res.json({
             message: "Workbook imported successfully",
@@ -129,7 +129,7 @@ app.post("/upload", upload.array("files"), async (req, res) => {
 
     catch (error) {
 
-        console.error(error);
+        console.error("\u274C Upload Error:", error);
 
         res.status(500).json({
             error: error.message
@@ -157,15 +157,14 @@ pool.query("SELECT NOW()", (err, result) => {
 
     if (err) {
 
-        console.error("Database connection failed:", err);
+        console.error("\u274C Database connection failed:", err);
 
     }
 
     else {
 
-        console.log("✅ PostgreSQL Connected!");
-        console.log(result.rows[0].now);
-
+        console.log("\u2705 PostgreSQL Connected!");
+      
     }
 
 });
@@ -178,6 +177,10 @@ const PORT = process.env.PORT || 5001;
 
 app.listen(PORT, () => {
 
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
+   
+    console.log("\u{1F680} InsightFlow Backend Started");
+    console.log(`\u{1F310} Server : http://localhost:${PORT}`);
+  
+    
 
 });
