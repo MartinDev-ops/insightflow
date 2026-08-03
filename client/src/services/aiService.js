@@ -1,6 +1,7 @@
 import { parseQuery } from "../ai/queryParser";
 
-const API_URL = "http://localhost:5001/ai";
+const API_URL =
+    process.env.REACT_APP_API_URL + "/ai";
 
 export async function askAI(workbook, userPrompt) {
 

@@ -22,7 +22,17 @@ function Dashboard() {
 
         const data = await getProjects();
 
-        setProjects(data);
+        // Sort projects with newest first when a timestamp is available
+        const sorted = Array.isArray(data)
+            ? data.slice().sort((a, b) => {
+                  const ta = a.created_at || a.createdAt || a.created || a.timestamp || null;
+                  const tb = b.created_at || b.createdAt || b.created || b.timestamp || null;
+                  if (ta && tb) return new Date(tb) - new Date(ta);
+                  return 0;
+              })
+            : data;
+
+        setProjects(sorted);
 
         setLoading(false);
 
@@ -64,30 +74,6 @@ function Dashboard() {
 
             </p>
 
-            {loading ? (
-
-                <p>Loading projects...</p>
-
-            ) : (
-
-                filteredProjects.length > 0 ? (
-                    <RecentProjects
-                        projects={filteredProjects}
-                        onProjectRenamed={(updatedProject) =>
-                            setProjects((items) => items.map((project) =>
-                                project.id === updatedProject.id ? updatedProject : project
-                            ))
-                        }
-                        onProjectDeleted={(projectId) =>
-                            setProjects((items) => items.filter((project) => project.id !== projectId))
-                        }
-                    />
-                ) : (
-                    <p style={{ marginTop: "18px" }}>{searchQuery.trim() ? "Project not file" : "No projects found. Create your first project to get started."}</p>
-                )
-
-            )}
-
             <button
 
                 onClick={() => setShowModal(true)}
@@ -111,6 +97,30 @@ function Dashboard() {
                 + New Project
 
             </button>
+
+            {loading ? (
+
+                <p>Loading projects...</p>
+
+            ) : (
+
+                filteredProjects.length > 0 ? (
+                    <RecentProjects
+                        projects={filteredProjects}
+                        onProjectRenamed={(updatedProject) =>
+                            setProjects((items) => items.map((project) =>
+                                project.id === updatedProject.id ? updatedProject : project
+                            ))
+                        }
+                        onProjectDeleted={(projectId) =>
+                            setProjects((items) => items.filter((project) => project.id !== projectId))
+                        }
+                    />
+                ) : (
+                    <p style={{ marginTop: "18px" }}>{searchQuery.trim() ? "Project not file" : "No projects found. Create your first project to get started."}</p>
+                )
+
+            )}
 
             {showModal && (
 
