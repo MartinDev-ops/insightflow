@@ -1,5 +1,13 @@
 import { LocaleType } from "@univerjs/presets";
 
+import {
+    BooleanNumber,
+    BorderStyleTypes,
+    HorizontalAlign,
+    VerticalAlign,
+    WrapStrategy
+} from "@univerjs/core";
+
 
 function calculateColumnWidth(
 
@@ -102,6 +110,316 @@ function calculateColumnWidth(
 }
 
 
+//--------------------------------
+// Style conversion (ExcelJS -> Univer IStyleData)
+//--------------------------------
+
+const BORDER_STYLE_MAP = {
+    thin: BorderStyleTypes.THIN,
+    hair: BorderStyleTypes.HAIR,
+    dotted: BorderStyleTypes.DOTTED,
+    dashed: BorderStyleTypes.DASHED,
+    dashDot: BorderStyleTypes.DASH_DOT,
+    dashDotDot: BorderStyleTypes.DASH_DOT_DOT,
+    double: BorderStyleTypes.DOUBLE,
+    medium: BorderStyleTypes.MEDIUM,
+    mediumDashed: BorderStyleTypes.MEDIUM_DASHED,
+    mediumDashDot: BorderStyleTypes.MEDIUM_DASH_DOT,
+    mediumDashDotDot: BorderStyleTypes.MEDIUM_DASH_DOT_DOT,
+    slantDashDot: BorderStyleTypes.SLANT_DASH_DOT,
+    thick: BorderStyleTypes.THICK
+};
+
+const H_ALIGN_MAP = {
+    left: HorizontalAlign.LEFT,
+    center: HorizontalAlign.CENTER,
+    centerContinuous: HorizontalAlign.CENTER,
+    right: HorizontalAlign.RIGHT,
+    justify: HorizontalAlign.JUSTIFIED,
+    distributed: HorizontalAlign.DISTRIBUTED
+};
+
+const V_ALIGN_MAP = {
+    top: VerticalAlign.TOP,
+    middle: VerticalAlign.MIDDLE,
+    bottom: VerticalAlign.BOTTOM,
+    distributed: VerticalAlign.MIDDLE,
+    justify: VerticalAlign.MIDDLE
+};
+
+// ExcelJS reports colors as ARGB hex ("FFRRGGBB") or a theme index.
+// Theme colors need the workbook's theme XML to resolve correctly, which
+// ExcelJS doesn't expose, so cells that only carry a theme color fall
+// back to no explicit color instead of guessing wrong.
+function convertColor(color) {
+
+    if (!color?.argb) {
+
+        return undefined;
+
+    }
+
+    const hex =
+
+        color.argb.length === 8
+            ? color.argb.slice(2)
+            : color.argb;
+
+    return {
+        rgb: `#${hex}`
+    };
+
+}
+
+
+function convertFont(font) {
+
+    if (!font) {
+
+        return {};
+
+    }
+
+    const style = {};
+
+    if (font.name) {
+
+        style.ff = font.name;
+
+    }
+
+    if (font.size) {
+
+        style.fs = font.size;
+
+    }
+
+    if (font.bold) {
+
+        style.bl = BooleanNumber.TRUE;
+
+    }
+
+    if (font.italic) {
+
+        style.it = BooleanNumber.TRUE;
+
+    }
+
+    if (font.underline) {
+
+        style.ul = { s: BooleanNumber.TRUE };
+
+    }
+
+    if (font.strike) {
+
+        style.st = { s: BooleanNumber.TRUE };
+
+    }
+
+    const color = convertColor(font.color);
+
+    if (color) {
+
+        style.cl = color;
+
+    }
+
+    return style;
+
+}
+
+
+// Solid fills show their foreground color as the visible cell background;
+// bgColor is only the pattern's secondary color for non-solid patterns, so
+// fgColor is the closest single-color approximation for those too.
+function convertFill(fill) {
+
+    if (!fill || fill.type !== "pattern") {
+
+        return undefined;
+
+    }
+
+    if (!fill.pattern || fill.pattern === "none") {
+
+        return undefined;
+
+    }
+
+    return convertColor(fill.fgColor);
+
+}
+
+
+function convertBorderSide(side) {
+
+    if (!side?.style) {
+
+        return undefined;
+
+    }
+
+    return {
+        s: BORDER_STYLE_MAP[side.style] ?? BorderStyleTypes.THIN,
+        cl: convertColor(side.color) || { rgb: "#000000" }
+    };
+
+}
+
+
+function convertBorder(border) {
+
+    if (!border) {
+
+        return undefined;
+
+    }
+
+    const bd = {};
+
+    const top = convertBorderSide(border.top);
+    const bottom = convertBorderSide(border.bottom);
+    const left = convertBorderSide(border.left);
+    const right = convertBorderSide(border.right);
+
+    if (top) bd.t = top;
+    if (bottom) bd.b = bottom;
+    if (left) bd.l = left;
+    if (right) bd.r = right;
+
+    return Object.keys(bd).length ? bd : undefined;
+
+}
+
+
+function convertAlignment(alignment) {
+
+    if (!alignment) {
+
+        return {};
+
+    }
+
+    const style = {};
+
+    if (alignment.horizontal && H_ALIGN_MAP[alignment.horizontal] !== undefined) {
+
+        style.ht = H_ALIGN_MAP[alignment.horizontal];
+
+    }
+
+    if (alignment.vertical && V_ALIGN_MAP[alignment.vertical] !== undefined) {
+
+        style.vt = V_ALIGN_MAP[alignment.vertical];
+
+    }
+
+    if (alignment.wrapText) {
+
+        style.tb = WrapStrategy.WRAP;
+
+    }
+
+    return style;
+
+}
+
+
+function convertNumFmt(numFmt) {
+
+    if (!numFmt || numFmt === "General") {
+
+        return {};
+
+    }
+
+    return {
+        n: { pattern: numFmt }
+    };
+
+}
+
+
+// Builds an IStyleData object from a raw ExcelJS cell, or null if the cell
+// carries no styling at all (so plain, unstyled cells stay unstyled instead
+// of picking up an empty style object).
+function buildCellStyle(cell) {
+
+    const style = {
+
+        ...convertFont(cell.font),
+
+        ...convertAlignment(cell.alignment),
+
+        ...convertNumFmt(cell.numFmt)
+
+    };
+
+    const bg = convertFill(cell.fill);
+
+    if (bg) {
+
+        style.bg = bg;
+
+    }
+
+    const bd = convertBorder(cell.border);
+
+    if (bd) {
+
+        style.bd = bd;
+
+    }
+
+    return Object.keys(style).length ? style : null;
+
+}
+
+
+// Dedupes identical style objects into shared entries, the same way Excel
+// itself keeps one style pool referenced by many cells, instead of writing
+// out a full style object per cell.
+function createStylePool() {
+
+    const styles = {};
+
+    const cache = new Map();
+
+    let counter = 0;
+
+    function register(styleData) {
+
+        if (!styleData) {
+
+            return undefined;
+
+        }
+
+        const key = JSON.stringify(styleData);
+
+        if (cache.has(key)) {
+
+            return cache.get(key);
+
+        }
+
+        const id = `style-${++counter}`;
+
+        styles[id] = styleData;
+
+        cache.set(key, id);
+
+        return id;
+
+    }
+
+    return { styles, register };
+
+}
+
+
 export function convertWorkbookToUniver(
 
     workbook
@@ -112,6 +430,8 @@ export function convertWorkbookToUniver(
     const sheets = {};
 
     const sheetOrder = [];
+
+    const stylePool = createStylePool();
 
 
     workbook.forEach(
@@ -198,16 +518,7 @@ export function convertWorkbookToUniver(
                         ) => {
 
 
-                            cellData[
-
-                                rowIndex
-
-                            ][
-
-                                columnIndex
-
-                            ] = {
-
+                            const cellEntry = {
 
                                 v:
 
@@ -216,6 +527,30 @@ export function convertWorkbookToUniver(
                                     ""
 
                             };
+
+                            const styleId =
+
+                                stylePool.register(
+
+                                    buildCellStyle(cell || {})
+
+                                );
+
+                            if (styleId) {
+
+                                cellEntry.s = styleId;
+
+                            }
+
+                            cellData[
+
+                                rowIndex
+
+                            ][
+
+                                columnIndex
+
+                            ] = cellEntry;
 
                         }
 
@@ -471,7 +806,7 @@ export function convertWorkbookToUniver(
 
         styles:
 
-            {},
+            stylePool.styles,
 
 
         sheetOrder,

@@ -19,6 +19,14 @@ app.use(cors());
 app.use(express.json());
 
 // =========================
+// Health check (used by the keep-alive ping)
+// =========================
+
+app.get("/health", (req, res) => {
+    res.sendStatus(200);
+});
+
+// =========================
 // Routes
 // =========================
 
@@ -39,6 +47,20 @@ const upload = multer({
 let dataset = [];
 
 // =========================
+// Helpers
+// =========================
+
+// Mirrors ExcelJS's own serial <-> Date math (utils.dateToExcel) so that
+// converting a Date back to a serial number is a lossless round trip and
+// stays in sync with the cell's numFmt (currency/date/percent patterns
+// only render correctly against numeric serials, not Date/ISO strings).
+function dateToExcelSerial(date, date1904) {
+
+    return 25569 + (date.getTime() / (24 * 3600 * 1000)) - (date1904 ? 1462 : 0);
+
+}
+
+// =========================
 // Upload Excel Workbook
 // =========================
 
@@ -57,6 +79,8 @@ app.post("/upload", upload.array("files"), async (req, res) => {
         const workbook = new ExcelJS.Workbook();
 
         await workbook.xlsx.readFile(req.files[0].path);
+
+        const date1904 = workbook.properties?.date1904 || false;
 
         const workbookData = [];
 
@@ -86,8 +110,16 @@ app.post("/upload", upload.array("files"), async (req, res) => {
 
                 row.eachCell({ includeEmpty: true }, (cell) => {
 
+                    let value = cell.value;
+
+                    if (value instanceof Date) {
+
+                        value = dateToExcelSerial(value, date1904);
+
+                    }
+
                     cells.push({
-                        value: cell.value,
+                        value,
                         style: cell.style,
                         numFmt: cell.numFmt,
                         font: cell.font,
