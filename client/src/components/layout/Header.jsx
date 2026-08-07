@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-function Header({ searchQuery = "", onSearch }) {
+function Header({ searchQuery = "", onSearch, hideActions = false }) {
     const [isSearching, setIsSearching] = useState(false);
 
     return (
@@ -36,20 +36,22 @@ function Header({ searchQuery = "", onSearch }) {
                 </div>
             </Link>
 
-            <div className="app-header-actions">
-                <button type="button" className="icon-button" onClick={() => setIsSearching((v) => !v)} aria-label="Toggle search">🔍</button>
-                {isSearching && (
-                    <input
-                        className="header-search"
-                        value={searchQuery}
-                        onChange={(event) => onSearch?.(event.target.value)}
-                        placeholder="Search projects..."
-                        autoFocus
-                    />
-                )}
-                <button type="button" className="icon-button" aria-label="Notifications">🔔</button>
-                <button type="button" className="icon-button" aria-label="Profile">👤</button>
-            </div>
+            {!hideActions && (
+                <div className="app-header-actions">
+                    <button type="button" className="icon-button" onClick={() => setIsSearching((v) => !v)} aria-label="Toggle search">🔍</button>
+                    {isSearching && (
+                        <input
+                            className="header-search"
+                            value={searchQuery}
+                            onChange={(event) => onSearch?.(event.target.value)}
+                            placeholder="Search projects..."
+                            autoFocus
+                        />
+                    )}
+                    <button type="button" className="icon-button" aria-label="Notifications">🔔</button>
+                    <button type="button" className="icon-button" aria-label="Profile">👤</button>
+                </div>
+            )}
         </header>
     );
 }

@@ -1,6 +1,6 @@
 import Header from "./Header";
 
-function MainLayout({ children, variant = "default", searchQuery, onSearch }) {
+function MainLayout({ children, variant = "default", searchQuery, onSearch, hideHeaderActions = false }) {
 
     return (
 
@@ -20,7 +20,7 @@ function MainLayout({ children, variant = "default", searchQuery, onSearch }) {
                     flexShrink: 0
                 }}
             >
-                <Header searchQuery={searchQuery} onSearch={onSearch} />
+                <Header searchQuery={searchQuery} onSearch={onSearch} hideActions={hideHeaderActions} />
             </div>
 
             <div

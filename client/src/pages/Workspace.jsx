@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 import MainLayout from "../components/layout/MainLayout";
 import WorkspaceLayout from "../components/workspace/WorkspaceLayout";
@@ -164,6 +164,13 @@ function Workspace() {
                 id,
 
                 univerRef.current
+
+            );
+
+
+            alert(
+
+                "✅ Workbook saved."
 
             );
 
@@ -391,49 +398,16 @@ function Workspace() {
 
     return (
 
-        <MainLayout>
+        <MainLayout hideHeaderActions>
 
             <div
                 style={{
                     display: "flex",
                     flexDirection: "column",
-                    gap: 12,
                     height: "100%",
                     minHeight: 0
                 }}
             >
-
-                <div
-                    style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: 16,
-                        flexShrink: 0
-                    }}
-                >
-                    <h1 style={{ margin: 0 }}>Project #{id}</h1>
-
-                    <Link
-                        to={`/projects/${id}/analytics`}
-                        style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 8,
-                            padding: "9px 12px",
-                            border: "1px solid #D6D0C6",
-                            borderRadius: 7,
-                            background: "#FFFFFF",
-                            color: "#1F2937",
-                            fontSize: 14,
-                            fontWeight: 600,
-                            whiteSpace: "nowrap"
-                        }}
-                    >
-                        View dashboard <span aria-hidden="true">→</span>
-                    </Link>
-                </div>
-
 
                 <WorkspaceLayout
 
