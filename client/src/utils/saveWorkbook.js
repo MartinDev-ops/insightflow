@@ -1,3 +1,6 @@
+import API_BASE_URL from "../services/config";
+import { getVisitorId } from "../services/visitorId";
+
 export async function saveCurrentWorkbook(projectId, univerAPI) {
 
     if (!univerAPI) {
@@ -17,11 +20,12 @@ export async function saveCurrentWorkbook(projectId, univerAPI) {
     const snapshot = workbook.save();
 
     const response = await fetch(
-        `http://localhost:5001/workbooks/${projectId}`,
+        `${API_BASE_URL}/workbooks/${projectId}`,
         {
             method: "PUT",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "X-Visitor-Id": getVisitorId()
             },
             body: JSON.stringify({
                 workbook_data: snapshot

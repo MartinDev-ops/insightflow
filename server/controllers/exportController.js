@@ -1,11 +1,28 @@
 const ExcelJS = require("exceljs");
 const pool = require("../config/db");
+const { getVisitorId } = require("../utils/visitor");
 
 const exportWorkbook = async (req, res) => {
 
     try {
 
         const { projectId } = req.params;
+        const ownerId = getVisitorId(req);
+
+        const owned = await pool.query(
+            "SELECT id FROM projects WHERE id = $1 AND owner_id = $2;",
+            [projectId, ownerId]
+        );
+
+        if (owned.rows.length === 0) {
+
+            return res.status(404).json({
+
+                message: "Workbook not found."
+
+            });
+
+        }
 
         const result = await pool.query(
 

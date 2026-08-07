@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 
 import applyAIResult from "../../../ai/applyAIResult";
+import API_BASE_URL from "../../../services/config";
+import { getVisitorId } from "../../../services/visitorId";
 
 
 function AIPanel({
@@ -144,7 +146,7 @@ function AIPanel({
 
                 await fetch(
 
-                    "http://localhost:5001/ai",
+                    `${API_BASE_URL}/ai`,
 
                     {
 
@@ -154,7 +156,11 @@ function AIPanel({
 
                             "Content-Type":
 
-                                "application/json"
+                                "application/json",
+
+                            "X-Visitor-Id":
+
+                                getVisitorId()
 
                         },
 

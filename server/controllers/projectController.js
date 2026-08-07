@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const { getVisitorId } = require("../utils/visitor");
 
 // Create a new project
 const createProject = async (req, res) => {
@@ -6,6 +7,7 @@ const createProject = async (req, res) => {
     try {
 
         const { name, description, category } = req.body;
+        const ownerId = getVisitorId(req);
 
         if (!name || !category) {
 
@@ -15,15 +17,23 @@ const createProject = async (req, res) => {
 
         }
 
+        if (!ownerId) {
+
+            return res.status(400).json({
+                message: "Visitor ID is required."
+            });
+
+        }
+
         // Create project
         const projectResult = await pool.query(
             `
             INSERT INTO projects
-            (name, description, category)
-            VALUES ($1, $2, $3)
+            (name, description, category, owner_id)
+            VALUES ($1, $2, $3, $4)
             RETURNING *;
             `,
-            [name, description, category]
+            [name, description, category, ownerId]
         );
 
         const project = projectResult.rows[0];
@@ -88,11 +98,23 @@ const getProjects = async (req, res) => {
 
     try {
 
-        const result = await pool.query(`
+        const ownerId = getVisitorId(req);
+
+        if (!ownerId) {
+
+            return res.status(200).json([]);
+
+        }
+
+        const result = await pool.query(
+            `
             SELECT *
             FROM projects
+            WHERE owner_id = $1
             ORDER BY updated_at DESC;
-        `);
+            `,
+            [ownerId]
+        );
 
         res.status(200).json(result.rows);
 
@@ -114,14 +136,15 @@ const getProjectById = async (req, res) => {
     try {
 
         const { id } = req.params;
+        const ownerId = getVisitorId(req);
 
         const result = await pool.query(
             `
             SELECT *
             FROM projects
-            WHERE id = $1;
+            WHERE id = $1 AND owner_id = $2;
             `,
-            [id]
+            [id, ownerId]
         );
 
         if (result.rows.length === 0) {
@@ -150,12 +173,13 @@ const renameProject = async (req, res) => {
     try {
         const { id } = req.params;
         const name = req.body.name?.trim();
+        const ownerId = getVisitorId(req);
 
         if (!name) return res.status(400).json({ message: "Project name is required." });
 
         const result = await pool.query(
-            "UPDATE projects SET name = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *;",
-            [name, id]
+            "UPDATE projects SET name = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND owner_id = $3 RETURNING *;",
+            [name, id, ownerId]
         );
 
         if (result.rows.length === 0) {
@@ -174,14 +198,22 @@ const deleteProject = async (req, res) => {
 
     try {
         const { id } = req.params;
-        await client.query("BEGIN");
-        await client.query("DELETE FROM workbooks WHERE project_id = $1;", [id]);
-        const result = await client.query("DELETE FROM projects WHERE id = $1 RETURNING id;", [id]);
+        const ownerId = getVisitorId(req);
 
-        if (result.rows.length === 0) {
+        await client.query("BEGIN");
+
+        const owned = await client.query(
+            "SELECT id FROM projects WHERE id = $1 AND owner_id = $2;",
+            [id, ownerId]
+        );
+
+        if (owned.rows.length === 0) {
             await client.query("ROLLBACK");
             return res.status(404).json({ message: "Project not found." });
         }
+
+        await client.query("DELETE FROM workbooks WHERE project_id = $1;", [id]);
+        const result = await client.query("DELETE FROM projects WHERE id = $1 RETURNING id;", [id]);
 
         await client.query("COMMIT");
         res.status(204).send();

@@ -38,10 +38,12 @@ const {
     normalizeWorkbook
 } = require("../ai/workbook/normalizeWorkbook");
 
+const { getVisitorId } = require("../utils/visitor");
 
-async function getSavedWorkbook(projectId) {
 
-    if (!projectId) {
+async function getSavedWorkbook(projectId, ownerId) {
+
+    if (!projectId || !ownerId) {
 
         return null;
 
@@ -50,11 +52,12 @@ async function getSavedWorkbook(projectId) {
     const result = await pool.query(
 
         `
-        SELECT workbook_data
-        FROM workbooks
-        WHERE project_id = $1
+        SELECT w.workbook_data
+        FROM workbooks w
+        JOIN projects p ON p.id = w.project_id
+        WHERE w.project_id = $1 AND p.owner_id = $2
         `,
-        [projectId]
+        [projectId, ownerId]
 
     );
 
@@ -77,6 +80,8 @@ async function askAI(req, res) {
 
         } = req.body;
 
+        const ownerId = getVisitorId(req);
+
 
         // A live workbook lets the assistant read an import before it is
         // saved. If none was sent, recover the saved workbook for this project.
@@ -86,7 +91,7 @@ async function askAI(req, res) {
 
             ||
 
-            await getSavedWorkbook(projectId);
+            await getSavedWorkbook(projectId, ownerId);
 
         // Preserve the original import format exactly. Only saved Univer
         // snapshots need conversion before they reach the existing AI engine.

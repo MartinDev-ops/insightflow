@@ -1,4 +1,16 @@
 const pool = require("../config/db");
+const { getVisitorId } = require("../utils/visitor");
+
+async function ownsProject(projectId, ownerId) {
+
+    const result = await pool.query(
+        "SELECT id FROM projects WHERE id = $1 AND owner_id = $2;",
+        [projectId, ownerId]
+    );
+
+    return result.rows.length > 0;
+
+}
 
 // Get workbook by project ID
 const getWorkbook = async (req, res) => {
@@ -6,6 +18,15 @@ const getWorkbook = async (req, res) => {
     try {
 
         const { projectId } = req.params;
+        const ownerId = getVisitorId(req);
+
+        if (!(await ownsProject(projectId, ownerId))) {
+
+            return res.status(404).json({
+                message: "Project not found."
+            });
+
+        }
 
         const result = await pool.query(
             `
@@ -49,6 +70,15 @@ const saveWorkbook = async (req, res) => {
     try {
 
         const { projectId } = req.params;
+        const ownerId = getVisitorId(req);
+
+        if (!(await ownsProject(projectId, ownerId))) {
+
+            return res.status(404).json({
+                message: "Project not found."
+            });
+
+        }
 
         const { workbook_data } = req.body;
 
