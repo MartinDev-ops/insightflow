@@ -33,11 +33,11 @@ function ProjectAnalytics() {
         loadAnalytics();
     }, [id]);
 
-    if (error) return <MainLayout variant="analytics"><p>{error}</p></MainLayout>;
+    if (error) return <MainLayout variant="analytics" hideHeaderActions><p>{error}</p></MainLayout>;
 
-    if (!project || !analytics) return <MainLayout variant="analytics"><p>Loading analytics...</p></MainLayout>;
+    if (!project || !analytics) return <MainLayout variant="analytics" hideHeaderActions><p>Loading analytics...</p></MainLayout>;
 
-    return <MainLayout variant="analytics">
+    return <MainLayout variant="analytics" hideHeaderActions>
         <div className="analytics-page">
             <div className="analytics-heading">
                 <div>
