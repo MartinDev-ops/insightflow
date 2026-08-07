@@ -1,7 +1,9 @@
 import { useRef } from "react";
+import { Link } from "react-router-dom";
 
 function WorkspaceToolbar({
 
+    projectId,
     onSave,
     onImport,
     onClean,
@@ -79,6 +81,27 @@ function WorkspaceToolbar({
                 onChange={handleFileChange}
                 style={{ display: "none" }}
             />
+
+            <Link
+                to={`/projects/${projectId}/analytics`}
+                style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    marginLeft: "auto",
+                    padding: "9px 12px",
+                    border: "1px solid #D6D0C6",
+                    borderRadius: 7,
+                    background: "#FFFFFF",
+                    color: "#1F2937",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    whiteSpace: "nowrap",
+                    textDecoration: "none"
+                }}
+            >
+                View dashboard <span aria-hidden="true">→</span>
+            </Link>
 
         </div>
 

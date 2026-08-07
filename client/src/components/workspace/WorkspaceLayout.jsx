@@ -73,6 +73,12 @@ function WorkspaceLayout({
 
                 <WorkspaceToolbar
 
+                    projectId={
+
+                        projectId
+
+                    }
+
                     onSave={
 
                         onSave
