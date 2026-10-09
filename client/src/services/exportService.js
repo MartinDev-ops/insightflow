@@ -1,5 +1,5 @@
 import API_BASE_URL from "./config";
-import { getVisitorId } from "./visitorId";
+import { getAuthHeaders } from "./visitorId";
 
 const API_URL = `${API_BASE_URL}/export`;
 
@@ -7,11 +7,7 @@ export async function exportWorkbook(projectId) {
 
     const response = await fetch(`${API_URL}/${projectId}`, {
 
-        headers: {
-
-            "X-Visitor-Id": getVisitorId()
-
-        }
+        headers: await getAuthHeaders()
 
     });
 

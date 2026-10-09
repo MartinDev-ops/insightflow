@@ -1,0 +1,28 @@
+# Dependencies
+node_modules
+npm-debug.log*
+
+# Secrets — never bake into the image
+.env
+.env.*
+!.env.example
+
+# User uploads (may contain PII). Created at runtime.
+server/uploads
+uploads
+
+# Build output
+client/build
+build
+dist
+
+# Version control / editor / OS
+.git
+.gitignore
+.github
+.vscode
+.DS_Store
+
+# Docs
+*.md
+!README.md

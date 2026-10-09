@@ -1,17 +1,89 @@
-const STORAGE_KEY = "insightflow_visitor_id";
+import API_BASE_URL from "./config";
 
-export function getVisitorId() {
+const STORAGE_KEY = "insightflow_visitor_token";
 
-    let id = localStorage.getItem(STORAGE_KEY);
+/**
+ * Returns the signed visitor token, fetching one on first use.
+ *
+ * The token is issued by the server (`POST /auth/visitor`) and carries an HMAC
+ * signature over the visitor id. A client-generated id could be forged or
+ * guessed, letting one visitor read another visitor's projects, so identity is
+ * now established server-side.
+ *
+ * The in-flight promise is cached so that several services mounting at once
+ * (projects + workbook + export) trigger a single token request rather than
+ * racing to create separate visitors.
+ */
+let inFlightRequest = null;
 
-    if (!id) {
+export async function getVisitorToken() {
 
-        id = crypto.randomUUID();
+    const stored = localStorage.getItem(STORAGE_KEY);
 
-        localStorage.setItem(STORAGE_KEY, id);
+    if (stored) {
+
+        return stored;
 
     }
 
-    return id;
+    if (!inFlightRequest) {
+
+        inFlightRequest = fetch(`${API_BASE_URL}/auth/visitor`, {
+            method: "POST"
+        })
+            .then((response) => {
+
+                if (!response.ok) {
+
+                    throw new Error("Failed to establish visitor session.");
+
+                }
+
+                return response.json();
+
+            })
+            .then((data) => {
+
+                localStorage.setItem(STORAGE_KEY, data.token);
+
+                return data.token;
+
+            })
+            .finally(() => {
+
+                inFlightRequest = null;
+
+            });
+
+    }
+
+    return inFlightRequest;
+
+}
+
+/**
+ * Builds request headers carrying the visitor token.
+ *
+ * Use in place of the old `X-Visitor-Id` header. Every call site must await
+ * this, which is why the service functions are already async.
+ */
+export async function getAuthHeaders(extraHeaders = {}) {
+
+    const token = await getVisitorToken();
+
+    return {
+        ...extraHeaders,
+        "X-Visitor-Token": token
+    };
+
+}
+
+/**
+ * Clears the cached token. Call this when the server rejects a token as
+ * expired or tampered, so the next request mints a fresh one.
+ */
+export function clearVisitorToken() {
+
+    localStorage.removeItem(STORAGE_KEY);
 
 }

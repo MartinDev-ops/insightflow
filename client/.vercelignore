@@ -1,0 +1,17 @@
+# Vercel runs from the client/ root, so everything outside it is irrelevant.
+# These entries are mostly documentation — the main reason is to keep the server
+# directory (with node_modules and uploads) out of the build context.
+
+server/
+node_modules/
+build/
+.env
+.env.*
+!.env.example
+
+.github/
+Dockerfile
+.dockerignore
+
+*.md
+!README.md

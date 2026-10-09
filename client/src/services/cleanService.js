@@ -1,4 +1,5 @@
 import API_BASE_URL from "./config";
+import { getAuthHeaders } from "./visitorId";
 
 const API_URL = `${API_BASE_URL}/clean`;
 
@@ -8,11 +9,11 @@ export async function cleanWorkbook(workbook) {
 
         method: "POST",
 
-        headers: {
+        headers: await getAuthHeaders({
 
             "Content-Type": "application/json"
 
-        },
+        }),
 
         body: JSON.stringify({
 

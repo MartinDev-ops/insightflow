@@ -94,13 +94,122 @@ The AI engine contains components responsible for understanding user intent, int
 
 Future development plans include:
 
-- User authentication
-- Cloud deployment
+- User accounts and shared/team workspaces (visitor-scoped identity is implemented; see Security)
+- Cloud deployment (Docker and CI configuration are included; see Deployment)
 - Advanced AI recommendations
 - Real-time collaboration
 - Automated reporting
 - Additional data visualization capabilities
 - Business intelligence integrations
+
+---
+
+# Security
+
+## Identity model
+
+Projects are keyed by `owner_id` in Postgres. Rather than traditional user
+accounts, each browser obtains a **server-issued visitor token** and presents it
+as the `X-Visitor-Token` header on every request:
+
+1. `POST /auth/visitor` → `{ visitorId, token }` where token is `<uuid>.<hmac-sha256>`
+2. The client stores the token and sends it on every subsequent request.
+3. `requireVisitor` verifies the HMAC before the request reaches any controller.
+
+Tokens are generated **server-side** and signed, so a client cannot choose its
+own identity or reuse another visitor's signature. All queries filter on the
+verified owner id.
+
+> The earlier `X-Visitor-Id` header was self-asserted and unsigned, which allowed
+> one visitor to read or overwrite another's projects. It is no longer accepted.
+
+## Controls in place
+
+| Area | Control |
+|---|---|
+| Identity | HMAC-signed visitor tokens, constant-time signature comparison |
+| Authorization | `owner_id` filtering on every project/workbook query |
+| AI spend | Strictest rate limiter (20/min) on `/ai` — each call costs Gemini tokens |
+| Uploads | Size cap (25MB default), file count cap, extension allowlist (`.xlsx/.xls/.xlsm/.csv`) |
+| Data at rest | Temp upload files deleted in a `finally` block after parsing |
+| Debug surface | `GET /data` requires auth, returns only the caller's data, 404s in production |
+| Headers | `helmet` (HSTS, nosniff, frame-options) |
+| CORS | Explicit origin allowlist; required in production |
+| Database TLS | Certificate verification enabled in production |
+| Multi-tenancy | In-memory dataset keyed per visitor, bounded to 20 entries |
+| Shutdown | Graceful SIGTERM handling drains the HTTP server and DB pool |
+
+## Uploads may contain personal data
+
+Excel uploads can contain learner, grade, or payment records. `server/uploads/`
+is gitignored, and multer deletes temp files immediately after parsing. Do not
+commit real spreadsheets.
+
+---
+
+# Deployment
+
+## Required environment variables
+
+See `server/.env.example` for the annotated list.
+
+| Variable | Scope | Notes |
+|---|---|---|
+| `DATABASE_URL` | server | Postgres connection string. Use `?sslmode=require` in production |
+| `GEMINI_API_KEY` | server | Google Gemini API key |
+| `VISITOR_SECRET` | server | Token signing secret, ≥32 chars. **Rotating it invalidates all sessions** |
+| `NODE_ENV` | server | `production` enables strict behavior |
+| `CORS_ORIGINS` | server | Comma-separated allowed origins; **required** in production |
+| `UPLOAD_MAX_BYTES` | server | Upload cap in bytes (default 26214400) |
+| `PORT` | server | Defaults to 5001 |
+| `REACT_APP_API_URL` | client | Backend URL, **baked in at build time** |
+
+Generate a signing secret:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+```
+
+## Docker
+
+```bash
+# Build (REACT_APP_* is inlined into the bundle, so it is a build arg)
+docker build --build-arg REACT_APP_API_URL=https://api.example.com -t insightflow .
+
+# Run
+docker run -p 5001:5001 \
+  -e NODE_ENV=production \
+  -e DATABASE_URL="postgresql://...?sslmode=require" \
+  -e GEMINI_API_KEY="..." \
+  -e VISITOR_SECRET="..." \
+  -e CORS_ORIGINS="https://app.example.com" \
+  insightflow
+```
+
+The image is multi-stage (React build → server runtime), runs as the non-root
+`node` user, and ships a `/health` healthcheck.
+
+## Manual deployment
+
+```bash
+# Server
+cd server
+npm ci --omit=dev
+NODE_ENV=production node app.js
+
+# Client (serve `build/` from any static host)
+cd client
+REACT_APP_API_URL=https://api.example.com npm run build
+```
+
+## CI
+
+`.github/workflows/ci.yml` runs on every push and pull request:
+
+- syntax-checks all server modules
+- **fails if a real `.env` file is ever tracked again**
+- asserts `.env.example` documents every required variable
+- builds the client with warnings treated as errors
 
 ---
 

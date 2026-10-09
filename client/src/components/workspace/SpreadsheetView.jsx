@@ -23,6 +23,23 @@ function SpreadsheetView({
     const univerAPIRef = useRef(null);
     const initializedRef = useRef(false);
 
+    // The Univer instance is created exactly once and must never be rebuilt just
+    // because the parent re-renders with new callback props. Holding the
+    // callbacks in refs lets the long-lived command subscription always call the
+    // current versions, so the init effect keeps an empty dependency array
+    // without capturing stale closures.
+    const onReadyRef = useRef(onReady);
+    const onWorkbookChangeRef = useRef(onWorkbookChange);
+    const univerRefProp = useRef(univerRef);
+
+    useEffect(() => {
+
+        onReadyRef.current = onReady;
+        onWorkbookChangeRef.current = onWorkbookChange;
+        univerRefProp.current = univerRef;
+
+    });
+
     useEffect(() => {
 
         if (initializedRef.current) return;
@@ -56,10 +73,10 @@ function SpreadsheetView({
         univerAPIRef.current = univerAPI;
 
         // Make Univer available to parent components
-        if (univerRef) {
+        const parentRef = univerRefProp.current;
 
-            univerRef.current = univerAPI;
-
+        if (parentRef) {
+            parentRef.current = univerAPI;
         }
 
         univerAPI.createWorkbook({});
@@ -68,16 +85,17 @@ function SpreadsheetView({
         // it also observes edits after a loaded workbook replaces that workbook.
         const workbookChangeSubscription = univerAPI.onCommandExecuted(() => {
             const snapshot = univerAPI.getActiveWorkbook()?.save?.();
+            const notify = onWorkbookChangeRef.current;
 
-            if (snapshot && onWorkbookChange) {
-                onWorkbookChange(snapshot);
+            if (snapshot && notify) {
+                notify(snapshot);
             }
         });
 
-        if (onReady) {
+        const handleReady = onReadyRef.current;
 
-            onReady(univerAPI);
-
+        if (handleReady) {
+            handleReady(univerAPI);
         }
 
         console.log("✅ Univer initialized.");

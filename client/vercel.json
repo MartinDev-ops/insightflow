@@ -1,0 +1,39 @@
+{
+    "$schema": "https://openapi.vercel.sh/vercel.json",
+    "buildCommand": "GENERATE_SOURCEMAP=false npm run build",
+    "outputDirectory": "build",
+    "installCommand": "npm ci",
+    "framework": "create-react-app",
+
+    "//": "REACT_APP_API_URL is read by src/services/config.js and inlined into the bundle at build time. Set it as a Vercel env var; changing it requires a redeploy.",
+
+    "//rewrites": "The app uses BrowserRouter (src/App.js), so every path must be served by index.html or deep links like /project/123 return 404.",
+    "rewrites": [
+        {
+            "source": "/((?!api/).*)",
+            "destination": "/index.html"
+        }
+    ],
+
+    "//headers": "Source maps are excluded from the deployed output (see the build script). Long-lived immutable caching for hashed assets; index.html must never be cached or users get a stale bundle after a deploy.",
+    "headers": [
+        {
+            "source": "/static/(.*)",
+            "headers": [
+                {
+                    "key": "Cache-Control",
+                    "value": "public, max-age=31536000, immutable"
+                }
+            ]
+        },
+        {
+            "source": "/index.html",
+            "headers": [
+                {
+                    "key": "Cache-Control",
+                    "value": "no-cache, no-store, must-revalidate"
+                }
+            ]
+        }
+    ]
+}

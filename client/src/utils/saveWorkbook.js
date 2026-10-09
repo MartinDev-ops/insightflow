@@ -1,5 +1,5 @@
 import API_BASE_URL from "../services/config";
-import { getVisitorId } from "../services/visitorId";
+import { getAuthHeaders } from "../services/visitorId";
 
 export async function saveCurrentWorkbook(projectId, univerAPI) {
 
@@ -23,10 +23,9 @@ export async function saveCurrentWorkbook(projectId, univerAPI) {
         `${API_BASE_URL}/workbooks/${projectId}`,
         {
             method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "X-Visitor-Id": getVisitorId()
-            },
+            headers: await getAuthHeaders({
+                "Content-Type": "application/json"
+            }),
             body: JSON.stringify({
                 workbook_data: snapshot
             })

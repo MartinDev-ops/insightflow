@@ -18,9 +18,6 @@ function Workspace() {
 
     const univerRef = useRef(null);
 
-    const [originalWorkbook, setOriginalWorkbook] =
-        useState(null);
-
     const [currentWorkbook, setCurrentWorkbook] =
         useState(null);
 
@@ -108,13 +105,6 @@ function Workspace() {
 
                     const loadedWorkbook =
                         workbook.workbook_data;
-
-
-                    setOriginalWorkbook(
-
-                        loadedWorkbook
-
-                    );
 
 
                     setCurrentWorkbook(loadedWorkbook);
@@ -210,13 +200,6 @@ function Workspace() {
                 result.workbook;
 
 
-            setOriginalWorkbook(
-
-                newWorkbook
-
-            );
-
-
             setCurrentWorkbook(newWorkbook);
 
             setImportedWorkbook(
@@ -275,13 +258,6 @@ function Workspace() {
                     workbook
 
                 );
-
-
-            setOriginalWorkbook(
-
-                result.workbook
-
-            );
 
 
             setCurrentWorkbook(result.workbook);

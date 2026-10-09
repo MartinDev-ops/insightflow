@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel superseded runs on the same branch to save CI minutes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  server:
+    name: Server checks
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: server
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Syntax-check every server module. The project has no test suite yet, so
+      # this catches broken imports/exports that would otherwise only surface
+      # at runtime in production.
+      - name: Syntax check
+        run: |
+          find . -name "*.js" -not -path "./node_modules/*" -print0 \
+            | xargs -0 -n1 node --check
+
+      # Fail the build if a real secret is ever committed again. This is the
+      # regression guard for the credential that was previously in history.
+      - name: Scan for committed secrets
+        run: |
+          if git ls-files --error-unmatch server/.env 2>/dev/null; then
+            echo "::error::server/.env is tracked in git. Remove it and rotate any exposed credentials."
+            exit 1
+          fi
+          if git ls-files --error-unmatch client/.env 2>/dev/null; then
+            echo "::error::client/.env is tracked in git. Use client/.env.example instead."
+            exit 1
+          fi
+          echo "No tracked env files."
+
+      - name: Verify required env vars are documented
+        run: |
+          for var in DATABASE_URL GEMINI_API_KEY VISITOR_SECRET CORS_ORIGINS; do
+            if ! grep -q "$var" .env.example; then
+              echo "::error::$var is missing from server/.env.example"
+              exit 1
+            fi
+          done
+          echo ".env.example documents all required variables."
+
+  client:
+    name: Client build
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: client
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # CI=true makes `react-scripts build` treat warnings as errors.
+      - name: Build
+        run: npm run build
+        env:
+          CI: true
+          REACT_APP_API_URL: http://localhost:5001

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 
 import applyAIResult from "../../../ai/applyAIResult";
 import API_BASE_URL from "../../../services/config";
-import { getVisitorId } from "../../../services/visitorId";
+import { getAuthHeaders } from "../../../services/visitorId";
 
 
 function AIPanel({
@@ -152,17 +152,11 @@ function AIPanel({
 
                         method: "POST",
 
-                        headers: {
+                        headers: await getAuthHeaders({
 
-                            "Content-Type":
+                            "Content-Type": "application/json"
 
-                                "application/json",
-
-                            "X-Visitor-Id":
-
-                                getVisitorId()
-
-                        },
+                        }),
 
                         body: JSON.stringify({
 

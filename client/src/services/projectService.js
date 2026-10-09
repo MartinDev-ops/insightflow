@@ -1,5 +1,5 @@
 import API_BASE_URL from "./config";
-import { getVisitorId } from "./visitorId";
+import { getAuthHeaders } from "./visitorId";
 
 const API_URL = `${API_BASE_URL}/projects`;
 
@@ -9,11 +9,7 @@ export async function getProjects() {
 
         const response = await fetch(API_URL, {
 
-            headers: {
-
-                "X-Visitor-Id": getVisitorId()
-
-            }
+            headers: await getAuthHeaders()
 
         });
 
@@ -41,11 +37,7 @@ export async function getProject(projectId) {
 
     const response = await fetch(`${API_URL}/${projectId}`, {
 
-        headers: {
-
-            "X-Visitor-Id": getVisitorId()
-
-        }
+        headers: await getAuthHeaders()
 
     });
 
@@ -65,13 +57,11 @@ export async function renameProject(projectId, name) {
 
         method: "PATCH",
 
-        headers: {
+        headers: await getAuthHeaders({
 
-            "Content-Type": "application/json",
+            "Content-Type": "application/json"
 
-            "X-Visitor-Id": getVisitorId()
-
-        },
+        }),
 
         body: JSON.stringify({
 
@@ -97,11 +87,7 @@ export async function deleteProject(projectId) {
 
         method: "DELETE",
 
-        headers: {
-
-            "X-Visitor-Id": getVisitorId()
-
-        }
+        headers: await getAuthHeaders()
 
     });
 
@@ -121,13 +107,11 @@ export async function createProject(project) {
 
             method: "POST",
 
-            headers: {
+            headers: await getAuthHeaders({
 
-                "Content-Type": "application/json",
+                "Content-Type": "application/json"
 
-                "X-Visitor-Id": getVisitorId()
-
-            },
+            }),
 
             body: JSON.stringify(project)
 

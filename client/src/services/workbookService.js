@@ -1,5 +1,5 @@
 import API_BASE_URL from "./config";
-import { getVisitorId } from "./visitorId";
+import { getAuthHeaders } from "./visitorId";
 
 const API_URL = `${API_BASE_URL}/workbooks`;
 
@@ -7,11 +7,7 @@ export async function getWorkbook(projectId) {
 
     const response = await fetch(`${API_URL}/${projectId}`, {
 
-        headers: {
-
-            "X-Visitor-Id": getVisitorId()
-
-        }
+        headers: await getAuthHeaders()
 
     });
 
@@ -31,13 +27,11 @@ export async function saveWorkbook(projectId, workbookData) {
 
         method: "PUT",
 
-        headers: {
+        headers: await getAuthHeaders({
 
-            "Content-Type": "application/json",
+            "Content-Type": "application/json"
 
-            "X-Visitor-Id": getVisitorId()
-
-        },
+        }),
 
         body: JSON.stringify({
 
